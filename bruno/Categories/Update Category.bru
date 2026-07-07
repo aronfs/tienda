@@ -1,0 +1,26 @@
+meta {
+  name: Update Category
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{base_url}}/api/categories/1
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Categoría Modificada",
+    "description": "Descripción actualizada"
+  }
+}

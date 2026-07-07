@@ -1,0 +1,26 @@
+meta {
+  name: Create Category
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/api/categories
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Nueva Categoría",
+    "description": "Descripción de la categoría"
+  }
+}

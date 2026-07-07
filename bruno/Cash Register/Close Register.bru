@@ -1,0 +1,26 @@
+meta {
+  name: Close Register
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/api/cash-register/close
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "actualTotal": 1500.00,
+    "observations": "Cierre de caja regular"
+  }
+}

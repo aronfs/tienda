@@ -1,0 +1,15 @@
+meta {
+  name: List Returns
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/api/returns
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}

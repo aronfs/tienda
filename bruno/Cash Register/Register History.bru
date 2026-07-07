@@ -1,0 +1,15 @@
+meta {
+  name: Register History
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url}}/api/cash-register/history
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}

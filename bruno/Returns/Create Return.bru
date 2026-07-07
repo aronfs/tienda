@@ -1,0 +1,32 @@
+meta {
+  name: Create Return
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/api/returns
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "saleId": 1,
+    "reason": "Producto defectuoso",
+    "details": [
+      {
+        "productId": 1,
+        "quantity": 1
+      }
+    ]
+  }
+}

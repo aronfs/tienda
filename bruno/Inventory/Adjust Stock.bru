@@ -1,0 +1,27 @@
+meta {
+  name: Adjust Stock
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/api/inventory/adjust
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "productId": 1,
+    "quantity": 10,
+    "note": "Ajuste manual de inventario"
+  }
+}

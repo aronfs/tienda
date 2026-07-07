@@ -1,0 +1,295 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum CashRegisterStatus {
+  ABIERTA
+  CERRADA
+}
+
+enum MovementType {
+  SALE_OUT
+  PURCHASE_IN
+  ADJUSTMENT
+  RETURN_IN
+}
+
+enum PaymentMethod {
+  EFECTIVO
+  TARJETA
+  TRANSFERENCIA
+  QR
+}
+
+enum SaleStatus {
+  COMPLETADA
+  ANULADA
+}
+
+enum PurchaseStatus {
+  COMPLETADA
+  ANULADA
+}
+
+model Role {
+  id              Int               @id @default(autoincrement())
+  name            String            @unique
+  description     String?
+  active          Boolean           @default(true)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  users           User[]
+  rolePermissions RolePermission[]
+}
+
+model Permission {
+  id              Int               @id @default(autoincrement())
+  name            String            @unique
+  description     String?
+  createdAt       DateTime          @default(now())
+  rolePermissions RolePermission[]
+}
+
+model RolePermission {
+  roleId       Int
+  permissionId Int
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+model User {
+  id              Int                @id @default(autoincrement())
+  name            String
+  email           String             @unique
+  password        String
+  active          Boolean            @default(true)
+  roleId          Int
+  role            Role               @relation(fields: [roleId], references: [id])
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  sales           Sale[]
+  inventoryMovements InventoryMovement[]
+  cashRegisters   CashRegister[]
+  auditLogs       AuditLog[]
+
+  @@map("users")
+}
+
+model Category {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  description String?
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
+}
+
+model Provider {
+  id          Int        @id @default(autoincrement())
+  name        String     @unique
+  contact     String?
+  phone       String?
+  email       String?
+  address     String?
+  active      Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  products    Product[]
+  purchases   Purchase[]
+}
+
+model Product {
+  id            Int                  @id @default(autoincrement())
+  code          String               @unique
+  barcode       String?
+  name          String
+  description   String?
+  categoryId    Int
+  category      Category             @relation(fields: [categoryId], references: [id])
+  providerId    Int
+  provider      Provider             @relation(fields: [providerId], references: [id])
+  purchasePrice Float
+  salePrice     Float
+  stock         Int                  @default(0)
+  minStock      Int                  @default(0)
+  active        Boolean              @default(true)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  purchaseDetails PurchaseDetail[]
+  saleDetails   SaleDetail[]
+  inventoryMovements InventoryMovement[]
+  returnDetails ReturnDetail[]
+}
+
+model Client {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  docType   String   @default("DNI")
+  docNumber String?
+  phone     String?
+  email     String?
+  address   String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  sales     Sale[]
+}
+
+model Purchase {
+  id           Int              @id @default(autoincrement())
+  series       String?
+  number       Int?
+  providerId   Int
+  provider     Provider         @relation(fields: [providerId], references: [id])
+  userId       Int?
+  subtotal     Float
+  tax          Float            @default(0)
+  total        Float
+  status       PurchaseStatus   @default(COMPLETADA)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  details      PurchaseDetail[]
+}
+
+model PurchaseDetail {
+  id         Int      @id @default(autoincrement())
+  purchaseId Int
+  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  productId  Int
+  product    Product  @relation(fields: [productId], references: [id])
+  quantity   Int
+  unitCost   Float
+  subtotal   Float
+}
+
+model Sale {
+  id            Int           @id @default(autoincrement())
+  series        String?
+  number        Int?
+  clientId      Int           @default(1)
+  client        Client        @relation(fields: [clientId], references: [id])
+  userId        Int
+  user          User          @relation(fields: [userId], references: [id])
+  subtotal      Float
+  discount      Float         @default(0)
+  discountUser  Int?
+  tax           Float         @default(0)
+  total         Float
+  paymentMethod PaymentMethod @default(EFECTIVO)
+  status        SaleStatus    @default(COMPLETADA)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  details       SaleDetail[]
+  returns       Return[]
+}
+
+model SaleDetail {
+  id      Int     @id @default(autoincrement())
+  saleId  Int
+  sale    Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId Int
+  product Product @relation(fields: [productId], references: [id])
+  quantity Int
+  unitPrice Float
+  discount  Float  @default(0)
+  subtotal  Float
+}
+
+model InventoryMovement {
+  id        Int          @id @default(autoincrement())
+  productId Int
+  product   Product      @relation(fields: [productId], references: [id])
+  userId    Int?
+  user      User?        @relation(fields: [userId], references: [id])
+  type      MovementType
+  quantity  Int
+  stockBefore Int
+  stockAfter  Int
+  reference  String?
+  referenceId Int?
+  note       String?
+  createdAt  DateTime     @default(now())
+}
+
+model CashRegister {
+  id            Int                @id @default(autoincrement())
+  userId        Int
+  user          User               @relation(fields: [userId], references: [id])
+  openingDate   DateTime           @default(now())
+  closingDate   DateTime?
+  initialAmount Float
+  totalSales    Float              @default(0)
+  totalExpenses Float              @default(0)
+  expectedTotal Float?
+  actualTotal   Float?
+  difference    Float?
+  observations  String?
+  status        CashRegisterStatus @default(ABIERTA)
+  movements     CashMovement[]
+}
+
+model CashMovement {
+  id            Int          @id @default(autoincrement())
+  cashRegisterId Int
+  cashRegister  CashRegister @relation(fields: [cashRegisterId], references: [id], onDelete: Cascade)
+  type          String
+  amount        Float
+  description   String?
+  createdAt     DateTime     @default(now())
+}
+
+model Return {
+  id            Int          @id @default(autoincrement())
+  saleId        Int
+  sale          Sale         @relation(fields: [saleId], references: [id])
+  userId        Int?
+  reason        String
+  subtotal      Float
+  tax           Float        @default(0)
+  total         Float
+  createdAt     DateTime     @default(now())
+  details       ReturnDetail[]
+}
+
+model ReturnDetail {
+  id         Int     @id @default(autoincrement())
+  returnId   Int
+  return_    Return  @relation(fields: [returnId], references: [id], onDelete: Cascade)
+  productId  Int
+  product    Product @relation(fields: [productId], references: [id])
+  quantity   Int
+  unitPrice  Float
+  subtotal   Float
+
+  @@map("return_details")
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String
+  entity    String
+  entityId  Int?
+  detail    String?
+  createdAt DateTime @default(now())
+}
+
+model StoreConfig {
+  id               Int    @id @default(autoincrement())
+  storeName        String @default("Mi Tienda")
+  ruc              String @default("")
+  address          String @default("")
+  phone            String @default("")
+  email            String @default("")
+  currency         String @default("USD")
+  taxPercentage    Float  @default(15)
+}

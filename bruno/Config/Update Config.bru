@@ -1,0 +1,31 @@
+meta {
+  name: Update Config
+  type: http
+  seq: 2
+}
+
+put {
+  url: {{base_url}}/api/config
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "storeName": "Mi Tienda",
+    "ruc": "12345678901",
+    "address": "Dirección de la tienda",
+    "phone": "999888777",
+    "email": "tienda@email.com",
+    "currency": "PEN",
+    "taxPercentage": 18
+  }
+}

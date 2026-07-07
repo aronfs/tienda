@@ -1,0 +1,29 @@
+meta {
+  name: Create Provider
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/api/providers
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Proveedor Nuevo",
+    "contact": "Contacto",
+    "phone": "999888777",
+    "email": "proveedor@email.com",
+    "address": "Dirección del proveedor"
+  }
+}

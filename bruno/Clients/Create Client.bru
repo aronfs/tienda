@@ -1,0 +1,30 @@
+meta {
+  name: Create Client
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/api/clients
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Cliente Nuevo",
+    "docType": "DNI",
+    "docNumber": "12345678",
+    "phone": "999888777",
+    "email": "cliente@email.com",
+    "address": "Dirección del cliente"
+  }
+}

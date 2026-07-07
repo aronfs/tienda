@@ -1,0 +1,15 @@
+meta {
+  name: Deactivate Product
+  type: http
+  seq: 6
+}
+
+patch {
+  url: {{base_url}}/api/products/1/deactivate
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}

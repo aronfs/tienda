@@ -1,0 +1,15 @@
+meta {
+  name: Cancel Sale
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{base_url}}/api/sales/1/cancel
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}

@@ -1,0 +1,15 @@
+meta {
+  name: List Sales
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/api/sales
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
