@@ -5,22 +5,26 @@ meta {
 }
 
 put {
-  url: {{base_url}}/api/clients/1
+  url: {{base_url}}/api/clients/15
   body: json
   auth: bearer
-}
-
-auth:bearer {
-  token: {{auth_token}}
 }
 
 headers {
   Content-Type: application/json
 }
 
+auth:bearer {
+  token: {{auth_token}}
+}
+
 body:json {
   {
-    "name": "Cliente Modificado",
-    "phone": "111222333"
+    "name": "Cliente EDITADO",
+    "docType": "DNI",
+    "docNumber": "12345678",
+    "phone": "999888777",
+    "email": "cliente123@email.com",
+    "address": "Dirección del cliente"
   }
 }
