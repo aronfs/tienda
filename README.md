@@ -1,6 +1,6 @@
-# Sistema de Gestión de Tienda - API REST
+# Sistema de Gestión de Tienda - API REST (Multiempresa)
 
-Backend completo para administrar una tienda con autenticación, roles, productos, ventas, compras, inventario, caja y más.
+Backend multiempresa con aislamiento completo de datos por empresa y sucursal.
 
 ## Stack
 
@@ -20,14 +20,9 @@ Backend completo para administrar una tienda con autenticación, roles, producto
 ## Instalación
 
 ```bash
-# Clonar el repositorio
 git clone <repo-url>
 cd tienda-backend
-
-# Instalar dependencias
 bun install
-
-# Copiar variables de entorno
 cp .env.example .env
 # Editar .env con tus credenciales de PostgreSQL
 ```
@@ -35,223 +30,203 @@ cp .env.example .env
 ## Base de datos
 
 ```bash
-# Generar cliente Prisma
 bun run prisma:generate
-
-# Ejecutar migración inicial
 bun run prisma:migrate -- --name init
-
-# Poblar base de datos con datos de prueba
 bun run prisma:seed
-
-# (Opcional) Abrir Prisma Studio para ver datos
 bun run prisma:studio
 ```
 
 ## Ejecución
 
 ```bash
-# Desarrollo con hot reload
-bun run dev
-
-# Producción
-bun run start
+bun run dev   # Desarrollo con hot reload
+bun run start # Producción
 ```
 
-El servidor iniciará en `http://localhost:3000`.
+Servidor en `http://localhost:3000`.
 
-## Datos de prueba
+---
 
-### Usuarios
+## REGLAS MULTIEMPRESA (CRÍTICO)
+
+Este sistema implementa **aislamiento multiempresa estricto**.
+
+### Principio fundamental
+
+```
+Cada empresa solo ve, crea, edita y opera sus propios datos.
+```
+
+### Columnas de aislamiento
+
+| Columna | Dónde se usa |
+|---------|-------------|
+| `companyId` | Toda tabla operativa: Product, Category, Provider, Client, Sale, Purchase, InventoryMovement, CashRegister, CashMovement, Return, AuditLog |
+| `branchId` | Sale, Purchase, InventoryMovement, CashRegister, CashMovement, Return |
+
+### Reglas
+
+1. **companyId se toma del JWT**, nunca del body de la request.
+2. **findMany/findFirst siempre filtran por companyId**.
+3. **create asigna companyId automáticamente** desde el token.
+4. **update/delete validan que el registro pertenezca a companyId**.
+5. **Categorías, proveedores, clientes** tienen `@@unique([companyId, name])`.
+6. **Productos** tienen `@@unique([companyId, code])` y `@@unique([companyId, barcode])`.
+7. **Ventas/Compras validan** que productos, clientes y proveedores sean de la misma empresa.
+8. **Caja abierta** es única por `userId + companyId + branchId + status=ABIERTA`.
+9. **Dashboard, Analytics, Reportes** filtran por `companyId`.
+10. **Seed multiempresa** crea datos separados por empresa.
+
+### Middlewares
+
+- `requireCompany` - Bloquea si el usuario no tiene empresa asignada.
+- `requireBranch` - Bloquea si el usuario no tiene sucursal asignada.
+- Ambos se aplican automáticamente en todas las rutas protegidas.
+
+---
+
+## Datos de prueba (Seed Multiempresa)
+
+### Empresa 1: TechNova Store
 
 | Rol | Email | Password |
 |-----|-------|----------|
-| Administrador | admin@tienda.com | Admin123! |
-| Cajero | cajero@tienda.com | Cajero123! |
-| Bodeguero | bodega@tienda.com | Bodega123! |
+| Administrador | admin@technova.com | Admin123! |
+| Cajero | cajero@technova.com | Cajero123! |
+| Bodeguero | bodega@technova.com | Bodega123! |
 
-## Ejemplos de uso
+Productos: Laptop, MacBook, Samsung Galaxy, Mouse, Teclado, Cable USB-C.
 
-### Login
+### Empresa 2: MiniMarket San José
 
-```bash
-POST /api/auth/login
-Content-Type: application/json
+| Rol | Email | Password |
+|-----|-------|----------|
+| Administrador | admin@minimarket.com | Admin123! |
+| Cajero | cajero@minimarket.com | Cajero123! |
+| Bodeguero | bodega@minimarket.com | Bodega123! |
 
-{
-  "email": "admin@tienda.com",
-  "password": "Admin123!"
-}
-```
+Productos: Agua, Coca-Cola, Arroz, Leche, Detergente, Papas.
 
-Respuesta:
-```json
-{
-  "success": true,
-  "message": "Inicio de sesión exitoso",
-  "data": {
-    "token": "eyJhbGciOiJIUzI1NiIs...",
-    "user": {
-      "id": 1,
-      "name": "Administrador Principal",
-      "email": "admin@tienda.com",
-      "role": { "id": 1, "name": "ADMINISTRADOR" }
-    }
-  }
-}
-```
+---
 
-### Crear producto (requiere token)
+## Scripts de auditoría
 
 ```bash
-POST /api/products
-Authorization: Bearer <token>
-Content-Type: application/json
+# Auditar datos multiempresa
+bun scripts/audit-multitenancy.ts
 
-{
-  "code": "PROD-007",
-  "name": "Galletas 200g",
-  "categoryId": 5,
-  "providerId": 1,
-  "purchasePrice": 0.50,
-  "salePrice": 0.85,
-  "stock": 100,
-  "minStock": 10
-}
+# Corregir (solo después de auditar y revisar)
+bun scripts/fix-multitenancy.ts
 ```
 
-### Crear compra (requiere token)
+---
 
-```bash
-POST /api/purchases
-Authorization: Bearer <token>
-Content-Type: application/json
+## QA Multiempresa (Bruno)
 
-{
-  "providerId": 1,
-  "details": [
-    {
-      "productId": 1,
-      "quantity": 50,
-      "unitCost": 0.25
-    },
-    {
-      "productId": 2,
-      "quantity": 30,
-      "unitCost": 0.80
-    }
-  ]
-}
-```
+Carpeta `bruno/QA Multiempresa/` contiene 17 requests para validar:
+- Login con companyId/branchId en JWT
+- Aislamiento de productos, clientes, inventario
+- Bloqueo de ventas cross-company
+- Dashboard y analytics separados
 
-### Crear venta (requiere token)
-
-```bash
-POST /api/sales
-Authorization: Bearer <token>
-Content-Type: application/json
-
-{
-  "clientId": 1,
-  "paymentMethod": "EFECTIVO",
-  "details": [
-    {
-      "productId": 1,
-      "quantity": 2
-    },
-    {
-      "productId": 3,
-      "quantity": 1
-    }
-  ]
-}
-```
-
-### Abrir caja (requiere token)
-
-```bash
-POST /api/cash-register/open
-Authorization: Bearer <token>
-Content-Type: application/json
-
-{
-  "initialAmount": 50
-}
-```
+---
 
 ## Endpoints
 
 ### Auth
-- `POST /api/auth/register` - Registrar nuevo usuario
-- `POST /api/auth/login` - Iniciar sesión
-- `GET /api/auth/me` - Obtener perfil actual
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `GET /api/auth/me`
 
-### Usuarios (requiere users:manage)
-- `GET /api/users` - Listar usuarios
-- `GET /api/users/:id` - Obtener usuario
-- `POST /api/users` - Crear usuario
-- `PUT /api/users/:id` - Actualizar usuario
-- `PATCH /api/users/:id/deactivate` - Desactivar usuario
+### Setup
+- `GET /api/setup/status`
+- `POST /api/setup/initialize`
 
-### Roles
-- `GET /api/roles` - Listar roles con permisos
+### Empresa
+- `GET /api/company`
+- `PUT /api/company`
+
+### Sucursales
+- `GET /api/branches`
+- `POST /api/branches`
+- `PUT /api/branches/:id`
+- `DELETE /api/branches/:id`
 
 ### Categorías
-- `GET /api/categories` - Listar categorías
-- `POST /api/categories` - Crear categoría
-- `PUT /api/categories/:id` - Actualizar categoría
-- `PATCH /api/categories/:id/deactivate` - Desactivar categoría
+- `GET /api/categories`
+- `POST /api/categories`
+- `PUT /api/categories/:id`
+- `PATCH /api/categories/:id/deactivate`
 
 ### Productos
-- `GET /api/products` - Listar productos
-- `GET /api/products/low-stock` - Productos con bajo stock
-- `GET /api/products/:id` - Obtener producto
-- `POST /api/products` - Crear producto
-- `PUT /api/products/:id` - Actualizar producto
-- `PATCH /api/products/:id/deactivate` - Desactivar producto
+- `GET /api/products`
+- `GET /api/products/low-stock`
+- `GET /api/products/:id`
+- `POST /api/products`
+- `PUT /api/products/:id`
+- `PATCH /api/products/:id/deactivate`
 
 ### Proveedores
-- `GET /api/providers` - Listar proveedores
-- `POST /api/providers` - Crear proveedor
-- `PUT /api/providers/:id` - Actualizar proveedor
-- `PATCH /api/providers/:id/deactivate` - Desactivar proveedor
+- `GET /api/providers`
+- `POST /api/providers`
+- `PUT /api/providers/:id`
+- `PATCH /api/providers/:id/deactivate`
 
 ### Clientes
-- `GET /api/clients` - Listar clientes
-- `POST /api/clients` - Crear cliente
-- `PUT /api/clients/:id` - Actualizar cliente
+- `GET /api/clients`
+- `POST /api/clients`
+- `PUT /api/clients/:id`
 
 ### Compras
-- `GET /api/purchases` - Listar compras
-- `GET /api/purchases/:id` - Obtener compra
-- `POST /api/purchases` - Crear compra (aumenta stock)
+- `GET /api/purchases`
+- `GET /api/purchases/:id`
+- `POST /api/purchases`
 
 ### Ventas
-- `GET /api/sales` - Listar ventas
-- `GET /api/sales/:id` - Obtener venta
-- `POST /api/sales` - Crear venta (descuenta stock)
-- `PATCH /api/sales/:id/cancel` - Anular venta (restaura stock)
+- `GET /api/sales`
+- `GET /api/sales/:id`
+- `POST /api/sales`
+- `PATCH /api/sales/:id/cancel`
 
 ### Inventario
-- `GET /api/inventory/movements` - Movimientos de inventario
-- `POST /api/inventory/adjust` - Ajustar inventario
+- `GET /api/inventory/movements`
+- `POST /api/inventory/adjust`
 
 ### Caja
-- `POST /api/cash-register/open` - Abrir caja
-- `POST /api/cash-register/close` - Cerrar caja
-- `GET /api/cash-register/current` - Caja actual del usuario
-- `GET /api/cash-register/history` - Historial de cajas
+- `POST /api/cash-register/open`
+- `POST /api/cash-register/close`
+- `GET /api/cash-register/current`
+- `GET /api/cash-register/history`
 
 ### Devoluciones
-- `GET /api/returns` - Listar devoluciones
-- `POST /api/returns` - Crear devolución (restaura stock)
+- `GET /api/returns`
+- `POST /api/returns`
 
 ### Dashboard
-- `GET /api/dashboard/summary` - Resumen del dashboard
+- `GET /api/dashboard/summary`
 
-### Configuración
-- `GET /api/config` - Obtener configuración
-- `PUT /api/config` - Actualizar configuración
+### Analytics
+- `GET /api/analytics/dashboard`
+- `GET /api/analytics/sales`
+- `GET /api/analytics/revenue`
+- `GET /api/analytics/purchases`
+- `GET /api/analytics/products`
+- `GET /api/analytics/categories`
+- `GET /api/analytics/clients`
+- `GET /api/analytics/providers`
+- `GET /api/analytics/inventory`
+- `GET /api/analytics/cash`
+- Charts y reportes
+
+### Facturación
+- `GET /api/billing`
+- `PUT /api/billing`
+
+### Impuestos
+- `GET /api/taxes`
+- `POST /api/taxes`
+- `PUT /api/taxes/:id`
+- `DELETE /api/taxes/:id`
 
 ### Auditoría
-- `GET /api/audit` - Ver registros de auditoría
+- `GET /api/audit`

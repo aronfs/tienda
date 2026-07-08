@@ -273,40 +273,50 @@ async function createCompanyFullData(
 
   const cats: { id: number; name: string }[] = [];
   for (const c of categoriesInput) {
-    const cat = await prisma.category.upsert({
-      where: { name: c.name },
-      update: {},
-      create: { name: c.name, description: c.description },
+    const existing = await prisma.category.findFirst({
+      where: { name: c.name, companyId: company.id },
     });
+    const cat = existing
+      ? existing
+      : await prisma.category.create({
+          data: { name: c.name, description: c.description, companyId: company.id },
+        });
     cats.push(cat);
   }
   const catMap = Object.fromEntries(cats.map((c) => [c.name, c.id]));
 
   const provs: { id: number; name: string }[] = [];
   for (const p of providersInput) {
-    const prov = await prisma.provider.upsert({
-      where: { name: p.name },
-      update: {},
-      create: p,
+    const existing = await prisma.provider.findFirst({
+      where: { name: p.name, companyId: company.id },
     });
+    const prov = existing
+      ? existing
+      : await prisma.provider.create({
+          data: { ...p, companyId: company.id },
+        });
     provs.push(prov);
   }
   const provMap = Object.fromEntries(provs.map((p) => [p.name, p.id]));
 
   const clients: { id: number; name: string }[] = [];
   for (const c of clientsInput) {
-    const client = await prisma.client.upsert({
-      where: { name: c.name },
-      update: {},
-      create: {
-        name: c.name,
-        docType: c.docType,
-        docNumber: c.docNumber,
-        phone: c.phone ?? null,
-        email: c.email ?? null,
-        address: c.address ?? null,
-      },
+    const existing = await prisma.client.findFirst({
+      where: { name: c.name, companyId: company.id },
     });
+    const client = existing
+      ? existing
+      : await prisma.client.create({
+          data: {
+            name: c.name,
+            docType: c.docType,
+            docNumber: c.docNumber,
+            phone: c.phone ?? null,
+            email: c.email ?? null,
+            address: c.address ?? null,
+            companyId: company.id,
+          },
+        });
     clients.push(client);
   }
   const clientMap = Object.fromEntries(clients.map((c) => [c.name, c.id]));
@@ -384,6 +394,8 @@ async function createCompanyFullData(
         quantity: item.qty,
         unitCost,
         subtotal: lineSubtotal,
+        companyId: company.id,
+        branchId: mainBranch.id,
       });
 
       await prisma.product.update({
@@ -523,19 +535,21 @@ async function createCompanyFullData(
         invoicePrefix: resolution.prefix,
         invoiceResolutionId: resolution.id,
         invoiceNumber,
-        details: {
-          create: details.map((d) => ({
-            productId: d.productId,
-            quantity: d.quantity,
-            unitPrice: d.unitPrice,
-            discount: d.discount,
-            subtotal: d.subtotal,
-            taxId: d.taxId,
-            taxRate: d.taxRate,
-            taxAmount: d.taxAmount,
-            totalLine: d.totalLine,
-          })),
-        },
+      details: {
+        create: details.map((d) => ({
+          productId: d.productId,
+          quantity: d.quantity,
+          unitPrice: d.unitPrice,
+          discount: d.discount,
+          subtotal: d.subtotal,
+          taxId: d.taxId,
+          taxRate: d.taxRate,
+          taxAmount: d.taxAmount,
+          totalLine: d.totalLine,
+          companyId: company.id,
+          branchId: mainBranch.id,
+        })),
+      },
       },
     });
 
@@ -626,6 +640,9 @@ async function createCompanyFullData(
   await prisma.cashMovement.create({
     data: {
       cashRegisterId: closedCashRegister.id,
+      companyId: company.id,
+      branchId: mainBranch.id,
+      userId: cashierId,
       type: "INGRESO",
       amount: sale1.total,
       description: `Venta día anterior`,
@@ -651,6 +668,9 @@ async function createCompanyFullData(
     data: [
       {
         cashRegisterId: openCashRegister.id,
+        companyId: company.id,
+        branchId: mainBranch.id,
+        userId: cashierId,
         type: "INGRESO",
         amount: sale2.total,
         description: "Venta TRANSFERENCIA",
@@ -658,6 +678,9 @@ async function createCompanyFullData(
       },
       {
         cashRegisterId: openCashRegister.id,
+        companyId: company.id,
+        branchId: mainBranch.id,
+        userId: cashierId,
         type: "INGRESO",
         amount: sale3.total,
         description: "Venta TARJETA",

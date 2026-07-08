@@ -1,0 +1,41 @@
+meta {
+  name: Create Product MiniMarket
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{base_url}}/products
+  body: json
+  headers: {
+    Authorization: Bearer {{minimarket_token}}
+    Content-Type: application/json
+  }
+}
+
+auth: none
+
+body:json {
+  {
+    "code": "MM-P007",
+    "barcode": "786200000007",
+    "name": "Jabón Líquido 500ml",
+    "categoryId": 10,
+    "providerId": 7,
+    "purchasePrice": 1.2,
+    "salePrice": 2.5,
+    "stock": 50,
+    "minStock": 10,
+    "taxId": 4
+  }
+}
+
+script:post-response {
+  const data = res.getBody();
+  if (res.status === 201) {
+    console.log("Product created:", data.data?.name);
+    console.log("PASS: Product created successfully");
+  } else {
+    console.error("FAIL:", data);
+  }
+}

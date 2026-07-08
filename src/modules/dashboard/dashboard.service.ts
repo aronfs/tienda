@@ -1,6 +1,6 @@
 import prisma from "../../config/prisma";
 
-export const getSummary = async () => {
+export const getSummary = async (companyId: number) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const tomorrow = new Date(today);
@@ -21,6 +21,7 @@ export const getSummary = async () => {
       where: {
         createdAt: { gte: today, lt: tomorrow },
         status: "COMPLETADA",
+        companyId,
       },
       _sum: { total: true },
       _count: true,
@@ -29,20 +30,22 @@ export const getSummary = async () => {
       where: {
         createdAt: { gte: startOfMonth },
         status: "COMPLETADA",
+        companyId,
       },
       _sum: { total: true },
       _count: true,
     }),
-    prisma.product.count({ where: { active: true } }),
+    prisma.product.count({ where: { active: true, companyId } }),
     prisma.product.count({
       where: {
         active: true,
+        companyId,
         stock: { lte: prisma.product.fields.minStock },
       },
     }),
-    prisma.client.count({ where: { active: true } }),
+    prisma.client.count({ where: { active: true, companyId } }),
     prisma.sale.findMany({
-      where: { status: "COMPLETADA" },
+      where: { status: "COMPLETADA", companyId },
       include: {
         client: { select: { name: true } },
         user: { select: { name: true } },
@@ -52,6 +55,9 @@ export const getSummary = async () => {
     }),
     prisma.saleDetail.groupBy({
       by: ["productId"],
+      where: {
+        sale: { companyId, status: "COMPLETADA" },
+      },
       _sum: { quantity: true },
       orderBy: { _sum: { quantity: "desc" } },
       take: 10,
@@ -61,7 +67,7 @@ export const getSummary = async () => {
   const topProductIds = productosMasVendidos.map((p) => p.productId);
   const topProducts = topProductIds.length > 0
     ? await prisma.product.findMany({
-        where: { id: { in: topProductIds } },
+        where: { id: { in: topProductIds }, companyId },
         select: { id: true, name: true, code: true },
       })
     : [];

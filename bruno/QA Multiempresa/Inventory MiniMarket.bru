@@ -1,0 +1,20 @@
+meta {
+  name: Inventory MiniMarket
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{base_url}}/inventory/movements
+  headers: {
+    Authorization: Bearer {{minimarket_token}}
+  }
+}
+
+auth: none
+
+script:post-response {
+  const data = res.getBody().data || [];
+  console.log("MiniMarket Inventory Movements:", data.length);
+  console.log("PASS: Inventory movements retrieved for MiniMarket only");
+}

@@ -24,7 +24,7 @@ async function getDateRange(filter: PeriodFilterInput) {
   return getPeriodDateRange(filter.period || "this_month", filter.startDate, filter.endDate);
 }
 
-export async function getDashboard(filter: PeriodFilterInput): Promise<DashboardSummary> {
+export async function getDashboard(filter: PeriodFilterInput, companyId: number): Promise<DashboardSummary> {
   const todayRange = getPeriodDateRange("today");
   const monthRange = getPeriodDateRange("this_month");
   const yearRange = getPeriodDateRange("year");
@@ -50,55 +50,55 @@ export async function getDashboard(filter: PeriodFilterInput): Promise<Dashboard
     lastPurchases,
   ] = await Promise.all([
     prisma.sale.aggregate({
-      where: { createdAt: { gte: todayRange.startDate, lte: todayRange.endDate }, status: "COMPLETADA" },
+      where: { companyId, createdAt: { gte: todayRange.startDate, lte: todayRange.endDate }, status: "COMPLETADA" },
       _count: { id: true },
       _sum: { total: true },
     }),
     prisma.sale.aggregate({
-      where: { createdAt: { gte: monthRange.startDate, lte: monthRange.endDate }, status: "COMPLETADA" },
+      where: { companyId, createdAt: { gte: monthRange.startDate, lte: monthRange.endDate }, status: "COMPLETADA" },
       _count: { id: true },
       _sum: { total: true },
     }),
     prisma.sale.aggregate({
-      where: { createdAt: { gte: yearRange.startDate, lte: yearRange.endDate }, status: "COMPLETADA" },
+      where: { companyId, createdAt: { gte: yearRange.startDate, lte: yearRange.endDate }, status: "COMPLETADA" },
       _count: { id: true },
       _sum: { total: true },
     }),
     prisma.sale.findMany({
-      where: { status: "COMPLETADA", createdAt: { gte: range.startDate, lte: range.endDate } },
+      where: { companyId, status: "COMPLETADA", createdAt: { gte: range.startDate, lte: range.endDate } },
       include: { details: true },
     }),
     prisma.sale.findMany({
-      where: { status: "COMPLETADA", createdAt: { gte: prevRange.startDate, lte: prevRange.endDate } },
+      where: { companyId, status: "COMPLETADA", createdAt: { gte: prevRange.startDate, lte: prevRange.endDate } },
       include: { details: true },
     }),
-    prisma.client.count({ where: { createdAt: { gte: monthRange.startDate, lte: monthRange.endDate } } }),
-    prisma.client.count({ where: { active: true } }),
-    prisma.product.aggregate({ _count: { id: true } }),
-    prisma.category.count(),
-    prisma.provider.count({ where: { active: true } }),
+    prisma.client.count({ where: { companyId, createdAt: { gte: monthRange.startDate, lte: monthRange.endDate } } }),
+    prisma.client.count({ where: { companyId, active: true } }),
+    prisma.product.aggregate({ where: { companyId }, _count: { id: true } }),
+    prisma.category.count({ where: { companyId } }),
+    prisma.provider.count({ where: { companyId, active: true } }),
     prisma.purchase.aggregate({
-      where: { createdAt: { gte: monthRange.startDate, lte: monthRange.endDate }, status: "COMPLETADA" },
+      where: { companyId, createdAt: { gte: monthRange.startDate, lte: monthRange.endDate }, status: "COMPLETADA" },
       _count: { id: true },
       _sum: { total: true },
     }),
     prisma.purchase.aggregate({
-      where: { createdAt: { gte: yearRange.startDate, lte: yearRange.endDate }, status: "COMPLETADA" },
+      where: { companyId, createdAt: { gte: yearRange.startDate, lte: yearRange.endDate }, status: "COMPLETADA" },
       _count: { id: true },
       _sum: { total: true },
     }),
     prisma.cashRegister.findFirst({
-      where: { status: "ABIERTA" },
+      where: { companyId, status: "ABIERTA" },
       orderBy: { openingDate: "desc" },
     }),
     prisma.sale.findMany({
-      where: { status: "COMPLETADA" },
+      where: { companyId, status: "COMPLETADA" },
       orderBy: { createdAt: "desc" },
       take: 5,
       include: { client: { select: { name: true } }, user: { select: { name: true } } },
     }),
     prisma.purchase.findMany({
-      where: { status: "COMPLETADA" },
+      where: { companyId, status: "COMPLETADA" },
       orderBy: { createdAt: "desc" },
       take: 5,
       include: { provider: { select: { name: true } } },
@@ -120,9 +120,9 @@ export async function getDashboard(filter: PeriodFilterInput): Promise<Dashboard
   const margin = calculateMargin(revenue, cost);
 
   const [activeProducts, outOfStockCount, allActiveProducts] = await Promise.all([
-    prisma.product.count({ where: { active: true } }),
-    prisma.product.count({ where: { stock: 0, active: true } }),
-    prisma.product.findMany({ where: { active: true }, select: { stock: true, minStock: true } }),
+    prisma.product.count({ where: { companyId, active: true } }),
+    prisma.product.count({ where: { companyId, stock: 0, active: true } }),
+    prisma.product.findMany({ where: { companyId, active: true }, select: { stock: true, minStock: true } }),
   ]);
   const lowStockCount = allActiveProducts.filter((p) => p.minStock > 0 && p.stock > 0 && p.stock <= p.minStock).length;
 
@@ -203,11 +203,12 @@ export async function getDashboard(filter: PeriodFilterInput): Promise<Dashboard
   };
 }
 
-export async function getSalesAnalytics(filter: PeriodFilterInput): Promise<SalesAnalytics> {
+export async function getSalesAnalytics(filter: PeriodFilterInput, companyId: number): Promise<SalesAnalytics> {
   const range = await getDateRange(filter);
   const prevRange = getPreviousPeriod(range);
 
   const where: any = {
+    companyId,
     createdAt: { gte: range.startDate, lte: range.endDate },
   };
   if (filter.paymentMethod) where.paymentMethod = filter.paymentMethod;
@@ -215,6 +216,7 @@ export async function getSalesAnalytics(filter: PeriodFilterInput): Promise<Sale
   if (filter.clientId) where.clientId = filter.clientId;
 
   const prevWhere: any = {
+    companyId,
     createdAt: { gte: prevRange.startDate, lte: prevRange.endDate },
   };
   if (filter.paymentMethod) prevWhere.paymentMethod = filter.paymentMethod;
@@ -345,21 +347,21 @@ export async function getSalesAnalytics(filter: PeriodFilterInput): Promise<Sale
   };
 }
 
-export async function getRevenueAnalytics(filter: PeriodFilterInput): Promise<RevenueAnalytics> {
+export async function getRevenueAnalytics(filter: PeriodFilterInput, companyId: number): Promise<RevenueAnalytics> {
   const range = await getDateRange(filter);
   const prevRange = getPreviousPeriod(range);
 
   const [sales, prevSales, yearlySales] = await Promise.all([
     prisma.sale.findMany({
-      where: { createdAt: { gte: range.startDate, lte: range.endDate }, status: "COMPLETADA" },
+      where: { companyId, createdAt: { gte: range.startDate, lte: range.endDate }, status: "COMPLETADA" },
       include: { details: true },
     }),
     prisma.sale.findMany({
-      where: { createdAt: { gte: prevRange.startDate, lte: prevRange.endDate }, status: "COMPLETADA" },
+      where: { companyId, createdAt: { gte: prevRange.startDate, lte: prevRange.endDate }, status: "COMPLETADA" },
       include: { details: true },
     }),
     prisma.sale.findMany({
-      where: { status: "COMPLETADA" },
+      where: { companyId, status: "COMPLETADA" },
       include: { details: true },
     }),
   ]);
@@ -428,17 +430,17 @@ export async function getRevenueAnalytics(filter: PeriodFilterInput): Promise<Re
   };
 }
 
-export async function getPurchaseAnalytics(filter: PeriodFilterInput): Promise<PurchaseAnalytics> {
+export async function getPurchaseAnalytics(filter: PeriodFilterInput, companyId: number): Promise<PurchaseAnalytics> {
   const range = await getDateRange(filter);
   const prevRange = getPreviousPeriod(range);
 
   const [purchases, prevPurchases] = await Promise.all([
     prisma.purchase.findMany({
-      where: { createdAt: { gte: range.startDate, lte: range.endDate }, status: "COMPLETADA" },
+      where: { companyId, createdAt: { gte: range.startDate, lte: range.endDate }, status: "COMPLETADA" },
       include: { provider: true, details: { include: { product: true } } },
     }),
     prisma.purchase.findMany({
-      where: { createdAt: { gte: prevRange.startDate, lte: prevRange.endDate }, status: "COMPLETADA" },
+      where: { companyId, createdAt: { gte: prevRange.startDate, lte: prevRange.endDate }, status: "COMPLETADA" },
     }),
   ]);
 
@@ -491,13 +493,14 @@ export async function getPurchaseAnalytics(filter: PeriodFilterInput): Promise<P
   };
 }
 
-export async function getProductAnalytics(filter: PeriodFilterInput): Promise<ProductAnalytics> {
+export async function getProductAnalytics(filter: PeriodFilterInput, companyId: number): Promise<ProductAnalytics> {
   const range = await getDateRange(filter);
 
   const [products, saleDetails] = await Promise.all([
-    prisma.product.findMany({ where: { active: true } }),
+    prisma.product.findMany({ where: { companyId, active: true } }),
     prisma.saleDetail.findMany({
       where: {
+        companyId,
         sale: { createdAt: { gte: range.startDate, lte: range.endDate }, status: "COMPLETADA" },
       },
       include: { product: true },
@@ -635,13 +638,14 @@ export async function getProductAnalytics(filter: PeriodFilterInput): Promise<Pr
   };
 }
 
-export async function getCategoryAnalytics(filter: PeriodFilterInput): Promise<CategoryAnalytics> {
+export async function getCategoryAnalytics(filter: PeriodFilterInput, companyId: number): Promise<CategoryAnalytics> {
   const range = await getDateRange(filter);
 
   const [categories, saleDetails] = await Promise.all([
-    prisma.category.findMany({ where: { active: true }, include: { products: true } }),
+    prisma.category.findMany({ where: { companyId, active: true }, include: { products: true } }),
     prisma.saleDetail.findMany({
       where: {
+        companyId,
         sale: { createdAt: { gte: range.startDate, lte: range.endDate }, status: "COMPLETADA" },
       },
       include: { product: true },
@@ -716,13 +720,13 @@ export async function getCategoryAnalytics(filter: PeriodFilterInput): Promise<C
   return { participation, sales, profits, products, rotation, topCategories };
 }
 
-export async function getClientAnalytics(filter: PeriodFilterInput): Promise<ClientAnalytics> {
+export async function getClientAnalytics(filter: PeriodFilterInput, companyId: number): Promise<ClientAnalytics> {
   const range = await getDateRange(filter);
 
   const [clients, sales] = await Promise.all([
-    prisma.client.findMany({ where: { active: true } }),
+    prisma.client.findMany({ where: { companyId, active: true } }),
     prisma.sale.findMany({
-      where: { createdAt: { gte: range.startDate, lte: range.endDate }, status: "COMPLETADA" },
+      where: { companyId, createdAt: { gte: range.startDate, lte: range.endDate }, status: "COMPLETADA" },
       include: { client: true },
     }),
   ]);
@@ -764,13 +768,13 @@ export async function getClientAnalytics(filter: PeriodFilterInput): Promise<Cli
   };
 }
 
-export async function getProviderAnalytics(filter: PeriodFilterInput): Promise<ProviderAnalytics> {
+export async function getProviderAnalytics(filter: PeriodFilterInput, companyId: number): Promise<ProviderAnalytics> {
   const range = await getDateRange(filter);
 
   const [providers, purchases] = await Promise.all([
-    prisma.provider.findMany({ where: { active: true } }),
+    prisma.provider.findMany({ where: { companyId, active: true } }),
     prisma.purchase.findMany({
-      where: { createdAt: { gte: range.startDate, lte: range.endDate }, status: "COMPLETADA" },
+      where: { companyId, createdAt: { gte: range.startDate, lte: range.endDate }, status: "COMPLETADA" },
       include: { provider: true, details: true },
     }),
   ]);
@@ -815,13 +819,13 @@ export async function getProviderAnalytics(filter: PeriodFilterInput): Promise<P
   };
 }
 
-export async function getInventoryAnalytics(filter: PeriodFilterInput): Promise<InventoryAnalytics> {
+export async function getInventoryAnalytics(filter: PeriodFilterInput, companyId: number): Promise<InventoryAnalytics> {
   const range = await getDateRange(filter);
 
   const [products, movements] = await Promise.all([
-    prisma.product.findMany({ where: { active: true } }),
+    prisma.product.findMany({ where: { companyId, active: true } }),
     prisma.inventoryMovement.findMany({
-      where: { createdAt: { gte: range.startDate, lte: range.endDate } },
+      where: { companyId, createdAt: { gte: range.startDate, lte: range.endDate } },
       include: { product: true },
       orderBy: { createdAt: "desc" },
     }),
@@ -855,6 +859,7 @@ export async function getInventoryAnalytics(filter: PeriodFilterInput): Promise<
   const saleGroupBy = await prisma.saleDetail.groupBy({
     by: ["productId"],
     where: {
+      companyId,
       sale: { createdAt: { gte: range.startDate, lte: range.endDate }, status: "COMPLETADA" },
     },
     _sum: { quantity: true },
@@ -917,17 +922,17 @@ export async function getInventoryAnalytics(filter: PeriodFilterInput): Promise<
   };
 }
 
-export async function getCashAnalytics(filter: PeriodFilterInput): Promise<CashAnalytics> {
+export async function getCashAnalytics(filter: PeriodFilterInput, companyId: number): Promise<CashAnalytics> {
   const range = await getDateRange(filter);
 
   const [openRegister, registers] = await Promise.all([
     prisma.cashRegister.findFirst({
-      where: { status: "ABIERTA" },
+      where: { companyId, status: "ABIERTA" },
       include: { user: { select: { id: true, name: true } }, movements: true },
       orderBy: { openingDate: "desc" },
     }),
     prisma.cashRegister.findMany({
-      where: { openingDate: { gte: range.startDate, lte: range.endDate } },
+      where: { companyId, openingDate: { gte: range.startDate, lte: range.endDate } },
       include: { movements: true },
       orderBy: { openingDate: "desc" },
     }),
@@ -935,7 +940,7 @@ export async function getCashAnalytics(filter: PeriodFilterInput): Promise<CashA
 
   const salesByMethod = await prisma.sale.groupBy({
     by: ["paymentMethod"],
-    where: { createdAt: { gte: range.startDate, lte: range.endDate }, status: "COMPLETADA" },
+    where: { companyId, createdAt: { gte: range.startDate, lte: range.endDate }, status: "COMPLETADA" },
     _sum: { total: true },
     _count: { id: true },
   });
@@ -975,8 +980,8 @@ export async function getCashAnalytics(filter: PeriodFilterInput): Promise<CashA
   };
 }
 
-export async function listReports(filter: PeriodFilterInput): Promise<Report[]> {
-  const where: any = { action: "REPORT_GENERATED" };
+export async function listReports(filter: PeriodFilterInput, companyId: number): Promise<Report[]> {
+  const where: any = { action: "REPORT_GENERATED", companyId };
   if (filter.userId) where.userId = filter.userId;
   if (filter.startDate && filter.endDate) {
     where.createdAt = { gte: new Date(filter.startDate), lte: new Date(filter.endDate) };
@@ -1015,7 +1020,8 @@ function safeJsonParse(str: string): any {
 
 export async function generateReport(
   input: GenerateReportInput,
-  userId: number
+  userId: number,
+  companyId: number
 ): Promise<Report> {
   const now = new Date();
   const reportId = now.getTime();
@@ -1023,6 +1029,7 @@ export async function generateReport(
   await prisma.auditLog.create({
     data: {
       userId,
+      companyId,
       action: "REPORT_GENERATED",
       entity: "Report",
       entityId: reportId,
@@ -1077,7 +1084,7 @@ export async function deleteReport(id: number): Promise<void> {
   });
 }
 
-export async function getReportDownload(id: number): Promise<{ report: Report; data: any } | null> {
+export async function getReportDownload(id: number, companyId: number): Promise<{ report: Report; data: any } | null> {
   const report = await getReport(id);
   if (!report) return null;
 
@@ -1085,49 +1092,49 @@ export async function getReportDownload(id: number): Promise<{ report: Report; d
   switch (report.type) {
     case "ventas":
     case "revenue":
-      data = await getSalesAnalytics({ period: "this_month" });
+      data = await getSalesAnalytics({ period: "this_month" }, companyId);
       break;
     case "compras":
-      data = await getPurchaseAnalytics({ period: "this_month" });
+      data = await getPurchaseAnalytics({ period: "this_month" }, companyId);
       break;
     case "clientes":
-      data = await getClientAnalytics({ period: "this_month" });
+      data = await getClientAnalytics({ period: "this_month" }, companyId);
       break;
     case "productos":
     case "productos_mas_vendidos":
     case "productos_menos_vendidos":
     case "stock_critico":
-      data = await getProductAnalytics({ period: "this_month" });
+      data = await getProductAnalytics({ period: "this_month" }, companyId);
       break;
     case "categorias":
-      data = await getCategoryAnalytics({ period: "this_month" });
+      data = await getCategoryAnalytics({ period: "this_month" }, companyId);
       break;
     case "inventario":
     case "productos_vencidos":
-      data = await getInventoryAnalytics({ period: "this_month" });
+      data = await getInventoryAnalytics({ period: "this_month" }, companyId);
       break;
     case "caja":
-      data = await getCashAnalytics({ period: "this_month" });
+      data = await getCashAnalytics({ period: "this_month" }, companyId);
       break;
     case "proveedores":
-      data = await getProviderAnalytics({ period: "this_month" });
+      data = await getProviderAnalytics({ period: "this_month" }, companyId);
       break;
     case "ganancias":
     case "rentabilidad":
     case "profit":
-      data = await getRevenueAnalytics({ period: "this_month" });
+      data = await getRevenueAnalytics({ period: "this_month" }, companyId);
       break;
     default:
-      data = await getDashboard({ period: "this_month" });
+      data = await getDashboard({ period: "this_month" }, companyId);
   }
 
   return { report, data };
 }
 
-export async function getChartRevenue(filter: PeriodFilterInput): Promise<ChartData> {
+export async function getChartRevenue(filter: PeriodFilterInput, companyId: number): Promise<ChartData> {
   const range = await getDateRange(filter);
   const sales = await prisma.sale.findMany({
-    where: { createdAt: { gte: range.startDate, lte: range.endDate }, status: "COMPLETADA" },
+    where: { companyId, createdAt: { gte: range.startDate, lte: range.endDate }, status: "COMPLETADA" },
     include: { details: true },
   });
 
@@ -1171,10 +1178,10 @@ export async function getChartRevenue(filter: PeriodFilterInput): Promise<ChartD
   };
 }
 
-export async function getChartSales(filter: PeriodFilterInput): Promise<ChartData> {
+export async function getChartSales(filter: PeriodFilterInput, companyId: number): Promise<ChartData> {
   const range = await getDateRange(filter);
   const sales = await prisma.sale.findMany({
-    where: { createdAt: { gte: range.startDate, lte: range.endDate }, status: "COMPLETADA" },
+    where: { companyId, createdAt: { gte: range.startDate, lte: range.endDate }, status: "COMPLETADA" },
   });
 
   const dailyMap = new Map<string, number>();
@@ -1199,9 +1206,10 @@ export async function getChartSales(filter: PeriodFilterInput): Promise<ChartDat
 
 export async function getChartCategories(
   filter: PeriodFilterInput,
+  companyId: number,
   limit: number = 10
 ): Promise<ChartData> {
-  const categories = await getCategoryAnalytics(filter);
+  const categories = await getCategoryAnalytics(filter, companyId);
   const top = categories.topCategories.slice(0, limit);
   return {
     labels: top.map((c) => c.categoryName),
@@ -1213,9 +1221,10 @@ export async function getChartCategories(
 
 export async function getChartProducts(
   filter: PeriodFilterInput,
+  companyId: number,
   limit: number = 10
 ): Promise<ChartData> {
-  const products = await getProductAnalytics(filter);
+  const products = await getProductAnalytics(filter, companyId);
   const top = products.bestSellers.slice(0, limit);
   return {
     labels: top.map((p) => p.productName),
@@ -1225,11 +1234,11 @@ export async function getChartProducts(
   };
 }
 
-export async function getChartPayments(filter: PeriodFilterInput): Promise<ChartData> {
+export async function getChartPayments(filter: PeriodFilterInput, companyId: number): Promise<ChartData> {
   const range = await getDateRange(filter);
   const payments = await prisma.sale.groupBy({
     by: ["paymentMethod"],
-    where: { createdAt: { gte: range.startDate, lte: range.endDate }, status: "COMPLETADA" },
+    where: { companyId, createdAt: { gte: range.startDate, lte: range.endDate }, status: "COMPLETADA" },
     _sum: { total: true },
     _count: { id: true },
   });
@@ -1249,9 +1258,9 @@ export async function getChartPayments(filter: PeriodFilterInput): Promise<Chart
   };
 }
 
-export async function getChartInventory(filter: PeriodFilterInput): Promise<ChartData> {
+export async function getChartInventory(filter: PeriodFilterInput, companyId: number): Promise<ChartData> {
   const products = await prisma.product.findMany({
-    where: { active: true },
+    where: { companyId, active: true },
     orderBy: { stock: "asc" },
     take: 10,
   });
@@ -1263,10 +1272,10 @@ export async function getChartInventory(filter: PeriodFilterInput): Promise<Char
   };
 }
 
-export async function getChartCustomers(filter: PeriodFilterInput): Promise<ChartData> {
+export async function getChartCustomers(filter: PeriodFilterInput, companyId: number): Promise<ChartData> {
   const range = await getDateRange(filter);
   const sales = await prisma.sale.findMany({
-    where: { createdAt: { gte: range.startDate, lte: range.endDate }, status: "COMPLETADA" },
+    where: { companyId, createdAt: { gte: range.startDate, lte: range.endDate }, status: "COMPLETADA" },
     include: { client: true },
   });
 

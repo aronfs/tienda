@@ -1,11 +1,13 @@
 import prisma from "../../config/prisma";
 
-export const findAll = async () => {
+export const findAll = async (companyId?: number) => {
+  const where: any = {};
+  if (companyId) where.companyId = companyId;
+
   return prisma.auditLog.findMany({
-    include: {
-      user: { select: { id: true, name: true, email: true } },
-    },
+    where,
+    include: { user: { select: { id: true, name: true } } },
     orderBy: { createdAt: "desc" },
-    take: 200,
+    take: 100,
   });
 };

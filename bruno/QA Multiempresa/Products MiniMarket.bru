@@ -1,0 +1,28 @@
+meta {
+  name: Products MiniMarket
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url}}/products
+  headers: {
+    Authorization: Bearer {{minimarket_token}}
+  }
+}
+
+auth: none
+
+script:post-response {
+  const data = res.getBody().data;
+  const names = data.map(p => p.name);
+  console.log("MiniMarket Products:", names);
+  // Must NOT contain: Laptop, MacBook, Samsung, Mouse, Teclado, Cable
+  const forbidden = ["Laptop", "MacBook", "Samsung", "Mouse", "Teclado", "Cable"];
+  const found = forbidden.filter(f => names.some(n => n.includes(f)));
+  if (found.length > 0) {
+    console.error("FAIL: Found TechNova products in MiniMarket:", found);
+  } else {
+    console.log("PASS: No TechNova products found in MiniMarket");
+  }
+}

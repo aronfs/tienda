@@ -103,10 +103,16 @@ model Company {
   billingConfig   BillingConfig?
   users           User[]
   products        Product[]
+  clients         Client[]
+  categories      Category[]
+  providers       Provider[]
   sales           Sale[]
   purchases       Purchase[]
   inventoryMovements InventoryMovement[]
   cashRegisters   CashRegister[]
+  cashMovements   CashMovement[]
+  auditLogs       AuditLog[]
+  returns         Return[]
 
   @@map("companies")
 }
@@ -131,7 +137,9 @@ model Branch {
   sales     Sale[]
   purchases Purchase[]
   cashRegisters CashRegister[]
+  cashMovements CashMovement[]
   inventoryMovements InventoryMovement[]
+  returns     Return[]
   invoiceResolutions InvoiceResolution[]
 
   @@unique([companyId, code])
@@ -169,6 +177,7 @@ model Tax {
   updatedAt   DateTime      @updatedAt
   products    Product[]
 
+  @@unique([companyId, name])
   @@map("taxes")
 }
 
@@ -232,17 +241,24 @@ model User {
 
 model Category {
   id          Int       @id @default(autoincrement())
-  name        String    @unique
+  companyId   Int
+  company     Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name        String
   description String?
   active      Boolean   @default(true)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   products    Product[]
+
+  @@unique([companyId, name])
+  @@map("categories")
 }
 
 model Provider {
   id          Int        @id @default(autoincrement())
-  name        String     @unique
+  companyId   Int
+  company     Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name        String
   contact     String?
   phone       String?
   email       String?
@@ -252,11 +268,15 @@ model Provider {
   updatedAt   DateTime   @updatedAt
   products    Product[]
   purchases   Purchase[]
+
+  @@unique([companyId, name])
+  @@unique([companyId, phone])
+  @@map("providers")
 }
 
 model Product {
   id            Int                  @id @default(autoincrement())
-  code          String               @unique
+  code          String
   barcode       String?
   name          String
   description   String?
@@ -264,9 +284,9 @@ model Product {
   category      Category             @relation(fields: [categoryId], references: [id])
   providerId    Int
   provider      Provider             @relation(fields: [providerId], references: [id])
-  companyId     Int?
+  companyId     Int
+  company       Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
   taxId         Int?
-  company       Company?             @relation(fields: [companyId], references: [id])
   tax           Tax?                 @relation(fields: [taxId], references: [id])
   purchasePrice Float
   salePrice     Float
@@ -279,11 +299,17 @@ model Product {
   saleDetails   SaleDetail[]
   inventoryMovements InventoryMovement[]
   returnDetails ReturnDetail[]
+
+  @@unique([companyId, code])
+  @@unique([companyId, barcode])
+  @@map("products")
 }
 
 model Client {
   id        Int      @id @default(autoincrement())
-  name      String   @unique
+  companyId Int
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name      String
   docType   String   @default("DNI")
   docNumber String?
   phone     String?
@@ -293,6 +319,10 @@ model Client {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   sales     Sale[]
+
+  @@unique([companyId, name])
+  @@unique([companyId, docNumber])
+  @@map("clients")
 }
 
 model Purchase {
@@ -302,10 +332,10 @@ model Purchase {
   providerId   Int
   provider     Provider         @relation(fields: [providerId], references: [id])
   userId       Int?
-  companyId    Int?
+  companyId    Int
   branchId     Int?
   taxTotal     Float            @default(0)
-  company      Company?         @relation(fields: [companyId], references: [id])
+  company      Company          @relation(fields: [companyId], references: [id])
   branch       Branch?          @relation(fields: [branchId], references: [id])
   subtotal     Float
   tax          Float            @default(0)
@@ -325,6 +355,10 @@ model PurchaseDetail {
   quantity   Int
   unitCost   Float
   subtotal   Float
+  companyId  Int
+  branchId   Int?
+
+  @@map("purchase_details")
 }
 
 model Sale {
@@ -335,14 +369,14 @@ model Sale {
   client        Client        @relation(fields: [clientId], references: [id])
   userId        Int
   user          User          @relation(fields: [userId], references: [id])
-  companyId     Int?
+  companyId     Int
   branchId      Int?
   taxTotal      Float         @default(0)
   invoiceNumber String?
-  invoicePrefix  String?
+  invoicePrefix String?
   invoiceResolutionId Int?
-  company       Company?            @relation(fields: [companyId], references: [id])
-  branch        Branch?             @relation(fields: [branchId], references: [id])
+  company       Company       @relation(fields: [companyId], references: [id])
+  branch        Branch?       @relation(fields: [branchId], references: [id])
   invoiceResolution InvoiceResolution? @relation(fields: [invoiceResolutionId], references: [id])
   subtotal      Float
   discount      Float         @default(0)
@@ -371,6 +405,10 @@ model SaleDetail {
   taxAmount Float   @default(0)
   subtotal  Float
   totalLine Float
+  companyId Int
+  branchId  Int?
+
+  @@map("sale_details")
 }
 
 model InventoryMovement {
@@ -379,9 +417,9 @@ model InventoryMovement {
   product   Product      @relation(fields: [productId], references: [id])
   userId    Int?
   user      User?        @relation(fields: [userId], references: [id])
-  companyId Int?
+  companyId Int
   branchId  Int?
-  company   Company?     @relation(fields: [companyId], references: [id])
+  company   Company      @relation(fields: [companyId], references: [id])
   branch    Branch?      @relation(fields: [branchId], references: [id])
   type      MovementType
   quantity  Int
@@ -397,16 +435,16 @@ model CashRegister {
   id            Int                @id @default(autoincrement())
   userId        Int
   user          User               @relation(fields: [userId], references: [id])
-  companyId     Int?
-  branchId        Int?
-  company       Company?           @relation(fields: [companyId], references: [id])
+  companyId     Int
+  branchId      Int?
+  company       Company            @relation(fields: [companyId], references: [id])
   branch        Branch?            @relation(fields: [branchId], references: [id])
   openingDate   DateTime           @default(now())
   closingDate   DateTime?
   initialAmount Float
   totalSales    Float              @default(0)
   totalExpenses Float              @default(0)
-  expectedTotal  Float?
+  expectedTotal Float?
   actualTotal   Float?
   difference    Float?
   observations  String?
@@ -418,10 +456,18 @@ model CashMovement {
   id            Int          @id @default(autoincrement())
   cashRegisterId Int
   cashRegister  CashRegister @relation(fields: [cashRegisterId], references: [id], onDelete: Cascade)
+  companyId     Int
+  branchId      Int?
+  company       Company      @relation(fields: [companyId], references: [id])
+  branch        Branch?      @relation(fields: [branchId], references: [id])
+  userId        Int?
+  saleId        Int?
   type          String
   amount        Float
   description   String?
   createdAt     DateTime     @default(now())
+
+  @@map("cash_movements")
 }
 
 model Return {
@@ -429,6 +475,10 @@ model Return {
   saleId        Int
   sale          Sale         @relation(fields: [saleId], references: [id])
   userId        Int?
+  companyId     Int
+  branchId      Int?
+  company       Company      @relation(fields: [companyId], references: [id])
+  branch        Branch?      @relation(fields: [branchId], references: [id])
   reason        String
   subtotal      Float
   tax           Float        @default(0)
@@ -446,6 +496,8 @@ model ReturnDetail {
   quantity   Int
   unitPrice  Float
   subtotal   Float
+  companyId  Int
+  branchId   Int?
 
   @@map("return_details")
 }
@@ -454,6 +506,8 @@ model AuditLog {
   id        Int      @id @default(autoincrement())
   userId    Int?
   user      User?    @relation(fields: [userId], references: [id])
+  companyId Int?
+  company   Company? @relation(fields: [companyId], references: [id])
   action    String
   entity    String
   entityId  Int?

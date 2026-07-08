@@ -1,0 +1,30 @@
+meta {
+  name: Login TechNova
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/auth/login
+  body: json
+  headers: {
+    Content-Type: application/json
+  }
+}
+
+auth: none
+
+body:json {
+  {
+    "email": "admin@technova.com",
+    "password": "Admin123!"
+  }
+}
+
+script:post-response {
+  const data = res.getBody();
+  bru.setVar("technova_token", data.data.token);
+  bru.setVar("technova_user_id", data.data.user.id);
+  bru.setVar("technova_company_id", data.data.user.companyId);
+  bru.setVar("technova_branch_id", data.data.user.branchId);
+}

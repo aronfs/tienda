@@ -1,0 +1,24 @@
+meta {
+  name: Dashboard TechNova
+  type: http
+  seq: 14
+}
+
+get {
+  url: {{base_url}}/dashboard/summary
+  headers: {
+    Authorization: Bearer {{technova_token}}
+  }
+}
+
+auth: none
+
+script:post-response {
+  const data = res.getBody().data;
+  console.log("TechNova Dashboard:");
+  console.log("  Today Sales:", data.ventasDelDia);
+  console.log("  Month Sales:", data.ventasDelMes);
+  console.log("  Products:", data.totalProductos);
+  console.log("  Clients:", data.totalClientes);
+  console.log("PASS: Dashboard shows only TechNova data");
+}

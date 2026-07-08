@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { sendSuccess } from "../../utils/response";
 import { AuthRequest } from "../../middlewares/auth.middleware";
@@ -15,6 +15,6 @@ export const findById = asyncHandler(async (req: AuthRequest, res: Response) => 
 });
 
 export const create = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const purchase = await purchaseService.create(req.body, req.user!.userId);
+  const purchase = await purchaseService.create(req.body, req.user!.userId, req.user!.companyId!, req.user!.branchId);
   sendSuccess(res, purchase, "Compra registrada correctamente", 201);
 });

@@ -1,0 +1,25 @@
+meta {
+  name: Verify Client Not In TechNova
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{base_url}}/clients
+  headers: {
+    Authorization: Bearer {{technova_token}}
+  }
+}
+
+auth: none
+
+script:post-response {
+  const data = res.getBody().data || [];
+  const names = data.map(c => c.name);
+  const found = names.filter(n => n.includes("Pedro Prueba"));
+  if (found.length > 0) {
+    console.error("FAIL: MiniMarket client found in TechNova:", found);
+  } else {
+    console.log("PASS: MiniMarket client NOT found in TechNova");
+  }
+}

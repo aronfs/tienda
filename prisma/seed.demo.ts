@@ -200,14 +200,14 @@ async function main() {
   // ─── 12. CATEGORÍAS ──────────────────────────────
   await prisma.category.createMany({
     data: [
-      { name: "Bebidas", description: "Bebidas no alcohólicas" },
-      { name: "Abarrotes", description: "Productos de despensa" },
-      { name: "Limpieza", description: "Productos de limpieza y hogar" },
-      { name: "Lácteos", description: "Productos lácteos y derivados" },
-      { name: "Snacks", description: "Snacks, botanas y galletas" },
-      { name: "Cárnicos", description: "Embutidos y carnes frías" },
-      { name: "Panadería", description: "Pan y productos de panadería" },
-      { name: "Dulces y Golosinas", description: "Dulces, caramelos y golosinas" },
+      { name: "Bebidas", description: "Bebidas no alcohólicas", companyId: company.id },
+      { name: "Abarrotes", description: "Productos de despensa", companyId: company.id },
+      { name: "Limpieza", description: "Productos de limpieza y hogar", companyId: company.id },
+      { name: "Lácteos", description: "Productos lácteos y derivados", companyId: company.id },
+      { name: "Snacks", description: "Snacks, botanas y galletas", companyId: company.id },
+      { name: "Cárnicos", description: "Embutidos y carnes frías", companyId: company.id },
+      { name: "Panadería", description: "Pan y productos de panadería", companyId: company.id },
+      { name: "Dulces y Golosinas", description: "Dulces, caramelos y golosinas", companyId: company.id },
     ],
   });
   const cats = await prisma.category.findMany();
@@ -216,11 +216,11 @@ async function main() {
   // ─── 13. PROVEEDORES ─────────────────────────────
   await prisma.provider.createMany({
     data: [
-      { name: "Distribuidora Andina", contact: "Juan Carlos Mendoza", phone: "0987654321", email: "ventas@distribuidoraandina.com", address: "Av. Principal 123, Quito" },
-      { name: "Comercial El Mayorista", contact: "María López", phone: "0976543210", email: "ventas@elmayorista.com", address: "Calle Comercio 456, Guayaquil" },
-      { name: "Lácteos San Pedro", contact: "Pedro Sánchez", phone: "0965432109", email: "info@lacteossanpedro.com", address: "Av. Lechera 789, Cuenca" },
-      { name: "Cárnicos del Sur", contact: "Roberto Paredes", phone: "0954321098", email: "ventas@carnicosdelsur.com", address: "Av. Ganadera 321, Loja" },
-      { name: "Panificadora El Trigal", contact: "Luisa Martínez", phone: "0943210987", email: "contacto@eltrigal.com", address: "Calle del Pan 654, Ambato" },
+      { name: "Distribuidora Andina", contact: "Juan Carlos Mendoza", phone: "0987654321", email: "ventas@distribuidoraandina.com", address: "Av. Principal 123, Quito", companyId: company.id },
+      { name: "Comercial El Mayorista", contact: "María López", phone: "0976543210", email: "ventas@elmayorista.com", address: "Calle Comercio 456, Guayaquil", companyId: company.id },
+      { name: "Lácteos San Pedro", contact: "Pedro Sánchez", phone: "0965432109", email: "info@lacteossanpedro.com", address: "Av. Lechera 789, Cuenca", companyId: company.id },
+      { name: "Cárnicos del Sur", contact: "Roberto Paredes", phone: "0954321098", email: "ventas@carnicosdelsur.com", address: "Av. Ganadera 321, Loja", companyId: company.id },
+      { name: "Panificadora El Trigal", contact: "Luisa Martínez", phone: "0943210987", email: "contacto@eltrigal.com", address: "Calle del Pan 654, Ambato", companyId: company.id },
     ],
   });
   const provs = await prisma.provider.findMany();
@@ -229,16 +229,16 @@ async function main() {
   // ─── 14. CLIENTES ────────────────────────────────
   await prisma.client.createMany({
     data: [
-      { name: "Consumidor Final", docType: "DNI", docNumber: "00000000" },
-      { name: "Juan Pérez", docType: "DNI", docNumber: "12345678", phone: "0981112233", email: "juan.perez@email.com", address: "Calle Los Olivos 123" },
-      { name: "María González", docType: "DNI", docNumber: "87654321", phone: "0984455667", email: "maria.gonzalez@email.com", address: "Av. Primavera 456" },
-      { name: "Carlos López", docType: "DNI", docNumber: "11223344", phone: "0991122334", email: "carlos.lopez@email.com", address: "Jr. Las Flores 789" },
-      { name: "Ana Martínez", docType: "DNI", docNumber: "22334455", phone: "0982233445", email: "ana.martinez@email.com", address: "Calle Sol 321" },
-      { name: "Pedro Ramírez", docType: "DNI", docNumber: "33445566", phone: "0973344556", email: "pedro.ramirez@email.com", address: "Av. Luna 654" },
-      { name: "Lucía Fernández", docType: "DNI", docNumber: "44556677", phone: "0964455667", email: "lucia.fernandez@email.com", address: "Calle Estrella 987" },
-      { name: "Miguel Torres", docType: "DNI", docNumber: "55667788", phone: "0955566778", email: "miguel.torres@email.com", address: "Jr. Nubes 147" },
-      { name: "Sofía Castillo", docType: "DNI", docNumber: "66778899", phone: "0946677889", email: "sofia.castillo@email.com", address: "Av. Río 258" },
-      { name: "Diego Herrera", docType: "DNI", docNumber: "77889900", phone: "0937788990", email: "diego.herrera@email.com", address: "Calle Monte 369" },
+      { name: "Consumidor Final", docType: "DNI", docNumber: "00000000", companyId: company.id },
+      { name: "Juan Pérez", docType: "DNI", docNumber: "12345678", phone: "0981112233", email: "juan.perez@email.com", address: "Calle Los Olivos 123", companyId: company.id },
+      { name: "María González", docType: "DNI", docNumber: "87654321", phone: "0984455667", email: "maria.gonzalez@email.com", address: "Av. Primavera 456", companyId: company.id },
+      { name: "Carlos López", docType: "DNI", docNumber: "11223344", phone: "0991122334", email: "carlos.lopez@email.com", address: "Jr. Las Flores 789", companyId: company.id },
+      { name: "Ana Martínez", docType: "DNI", docNumber: "22334455", phone: "0982233445", email: "ana.martinez@email.com", address: "Calle Sol 321", companyId: company.id },
+      { name: "Pedro Ramírez", docType: "DNI", docNumber: "33445566", phone: "0973344556", email: "pedro.ramirez@email.com", address: "Av. Luna 654", companyId: company.id },
+      { name: "Lucía Fernández", docType: "DNI", docNumber: "44556677", phone: "0964455667", email: "lucia.fernandez@email.com", address: "Calle Estrella 987", companyId: company.id },
+      { name: "Miguel Torres", docType: "DNI", docNumber: "55667788", phone: "0955566778", email: "miguel.torres@email.com", address: "Jr. Nubes 147", companyId: company.id },
+      { name: "Sofía Castillo", docType: "DNI", docNumber: "66778899", phone: "0946677889", email: "sofia.castillo@email.com", address: "Av. Río 258", companyId: company.id },
+      { name: "Diego Herrera", docType: "DNI", docNumber: "77889900", phone: "0937788990", email: "diego.herrera@email.com", address: "Calle Monte 369", companyId: company.id },
     ],
   });
   const clients = await prisma.client.findMany();
@@ -334,7 +334,7 @@ async function main() {
         series: pi.series, number: pi.number, providerId: pi.providerId,
         subtotal: pi.subtotal, tax: pi.tax, taxTotal: pi.tax, total: pi.total,
         status: PurchaseStatus.COMPLETADA, createdAt: pi.createdAt,
-        details: { create: pi.details },
+        details: { create: pi.details.map((d) => ({ ...d, companyId: company.id, branchId: mainBranch.id })) },
       },
     });
     for (const d of pi.details) {
@@ -452,7 +452,7 @@ async function main() {
         invoicePrefix: resolution.prefix,
         invoiceResolutionId: resolution.id,
         invoiceNumber: `${resolution.prefix}-${String(si.number).padStart(8, "0")}`,
-        details: { create: si.details.map((d) => ({ ...d, taxId: ivaGeneral.id })) },
+        details: { create: si.details.map((d) => ({ ...d, taxId: ivaGeneral.id, companyId: company.id, branchId: mainBranch.id })) },
       },
     });
   }
@@ -473,13 +473,13 @@ async function main() {
   });
   await prisma.cashMovement.createMany({
     data: [
-      { cashRegisterId: cr1.id, type: "INGRESO", amount: 5.75, description: "Venta VENT-0001", createdAt: daysAgo(26, 10, 30) },
-      { cashRegisterId: cr1.id, type: "INGRESO", amount: 7.02, description: "Venta VENT-0002", createdAt: daysAgo(23, 11, 45) },
-      { cashRegisterId: cr1.id, type: "INGRESO", amount: 4.31, description: "Venta VENT-0003", createdAt: daysAgo(21, 15, 20) },
-      { cashRegisterId: cr1.id, type: "INGRESO", amount: 12.65, description: "Venta VENT-0004", createdAt: daysAgo(19, 12, 10) },
-      { cashRegisterId: cr1.id, type: "INGRESO", amount: 8.51, description: "Venta VENT-0005", createdAt: daysAgo(17, 9, 30) },
-      { cashRegisterId: cr1.id, type: "INGRESO", amount: 5.52, description: "Venta VENT-0006", createdAt: daysAgo(14, 17, 0) },
-      { cashRegisterId: cr1.id, type: "INGRESO", amount: 5.87, description: "Venta VENT-0007", createdAt: daysAgo(11, 14, 15) },
+      { cashRegisterId: cr1.id, companyId: company.id, branchId: mainBranch.id, type: "INGRESO", amount: 5.75, description: "Venta VENT-0001", createdAt: daysAgo(26, 10, 30) },
+      { cashRegisterId: cr1.id, companyId: company.id, branchId: mainBranch.id, type: "INGRESO", amount: 7.02, description: "Venta VENT-0002", createdAt: daysAgo(23, 11, 45) },
+      { cashRegisterId: cr1.id, companyId: company.id, branchId: mainBranch.id, type: "INGRESO", amount: 4.31, description: "Venta VENT-0003", createdAt: daysAgo(21, 15, 20) },
+      { cashRegisterId: cr1.id, companyId: company.id, branchId: mainBranch.id, type: "INGRESO", amount: 12.65, description: "Venta VENT-0004", createdAt: daysAgo(19, 12, 10) },
+      { cashRegisterId: cr1.id, companyId: company.id, branchId: mainBranch.id, type: "INGRESO", amount: 8.51, description: "Venta VENT-0005", createdAt: daysAgo(17, 9, 30) },
+      { cashRegisterId: cr1.id, companyId: company.id, branchId: mainBranch.id, type: "INGRESO", amount: 5.52, description: "Venta VENT-0006", createdAt: daysAgo(14, 17, 0) },
+      { cashRegisterId: cr1.id, companyId: company.id, branchId: mainBranch.id, type: "INGRESO", amount: 5.87, description: "Venta VENT-0007", createdAt: daysAgo(11, 14, 15) },
     ],
   });
   console.log("Caja registradora creada");

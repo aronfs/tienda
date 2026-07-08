@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { sendSuccess } from "../../utils/response";
 import { AuthRequest } from "../../middlewares/auth.middleware";
@@ -15,7 +15,7 @@ export const findById = asyncHandler(async (req: AuthRequest, res: Response) => 
 });
 
 export const create = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const sale = await saleService.create(req.body, req.user!.userId, req.user!.roleName);
+  const sale = await saleService.create(req.body, req.user!.userId, req.user!.roleName, req.user!.companyId!, req.user!.branchId);
   sendSuccess(res, sale, "Venta registrada correctamente", 201);
 });
 

@@ -1,18 +1,22 @@
 import prisma from "../../config/prisma";
 import { AppError } from "../../utils/appError";
 
-export const openRegister = async (userId: number, initialAmount: number) => {
+export const openRegister = async (userId: number, initialAmount: number, companyId: number, branchId: number | null) => {
+  if (!branchId) throw new AppError("Debe estar asociado a una sucursal para abrir caja", 400);
+
   const openRegister = await prisma.cashRegister.findFirst({
-    where: { userId, status: "ABIERTA" },
+    where: { userId, companyId, branchId, status: "ABIERTA" },
   });
 
   if (openRegister) {
-    throw new AppError("Ya tienes una caja abierta. Ciérrala antes de abrir una nueva.", 400);
+    throw new AppError("Ya tienes una caja abierta en esta sucursal. Ciérrala antes de abrir una nueva.", 400);
   }
 
   const register = await prisma.cashRegister.create({
     data: {
       userId,
+      companyId,
+      branchId,
       initialAmount,
       status: "ABIERTA",
     },
@@ -22,6 +26,7 @@ export const openRegister = async (userId: number, initialAmount: number) => {
   await prisma.auditLog.create({
     data: {
       userId,
+      companyId,
       action: "OPEN",
       entity: "CASH_REGISTER",
       entityId: register.id,
@@ -35,11 +40,15 @@ export const openRegister = async (userId: number, initialAmount: number) => {
 export const closeRegister = async (
   userId: number,
   actualTotal: number,
-  observations?: string
+  observations?: string,
+  companyId?: number,
+  branchId?: number | null
 ) => {
-  const register = await prisma.cashRegister.findFirst({
-    where: { userId, status: "ABIERTA" },
-  });
+  const where: any = { userId, status: "ABIERTA" };
+  if (companyId) where.companyId = companyId;
+  if (branchId) where.branchId = branchId;
+
+  const register = await prisma.cashRegister.findFirst({ where });
 
   if (!register) {
     throw new AppError("No tienes una caja abierta", 400);
@@ -64,6 +73,7 @@ export const closeRegister = async (
   await prisma.auditLog.create({
     data: {
       userId,
+      companyId,
       action: "CLOSE",
       entity: "CASH_REGISTER",
       entityId: register.id,
@@ -74,9 +84,13 @@ export const closeRegister = async (
   return updated;
 };
 
-export const getCurrent = async (userId: number) => {
+export const getCurrent = async (userId: number, companyId?: number, branchId?: number | null) => {
+  const where: any = { userId, status: "ABIERTA" };
+  if (companyId) where.companyId = companyId;
+  if (branchId) where.branchId = branchId;
+
   const register = await prisma.cashRegister.findFirst({
-    where: { userId, status: "ABIERTA" },
+    where,
     include: {
       movements: { orderBy: { createdAt: "desc" } },
       user: { select: { id: true, name: true } },
@@ -86,8 +100,9 @@ export const getCurrent = async (userId: number) => {
   return register;
 };
 
-export const getHistory = async () => {
+export const getHistory = async (companyId: number) => {
   return prisma.cashRegister.findMany({
+    where: { companyId },
     include: { user: { select: { id: true, name: true } } },
     orderBy: { openingDate: "desc" },
     take: 50,

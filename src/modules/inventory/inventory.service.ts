@@ -2,8 +2,12 @@ import prisma from "../../config/prisma";
 import { AppError } from "../../utils/appError";
 import { InventoryAdjustInput } from "./inventory.schema";
 
-export const getMovements = async () => {
+export const getMovements = async (companyId: number, branchId?: number | null) => {
+  const where: any = { companyId };
+  if (branchId) where.branchId = branchId;
+
   return prisma.inventoryMovement.findMany({
+    where,
     include: {
       product: { select: { id: true, name: true, code: true } },
       user: { select: { id: true, name: true } },
@@ -13,18 +17,20 @@ export const getMovements = async () => {
   });
 };
 
-export const adjust = async (data: InventoryAdjustInput, userId: number) => {
-  const product = await prisma.product.findUnique({
-    where: { id: data.productId },
+export const adjust = async (data: InventoryAdjustInput, userId: number, companyId: number, branchId: number | null) => {
+  const product = await prisma.product.findFirst({
+    where: { id: data.productId, companyId },
   });
 
-  if (!product) throw new AppError("Producto no encontrado", 404);
+  if (!product) throw new AppError("Producto no encontrado o no pertenece a esta empresa", 404);
 
   const newStock = product.stock + data.quantity;
 
   if (newStock < 0) {
     throw new AppError("El stock no puede ser negativo", 400);
   }
+
+  if (!branchId) throw new AppError("Se requiere sucursal para ajustar inventario", 400);
 
   const movement = await prisma.$transaction(async (tx) => {
     await tx.product.update({
@@ -41,12 +47,15 @@ export const adjust = async (data: InventoryAdjustInput, userId: number) => {
         stockBefore: product.stock,
         stockAfter: newStock,
         note: data.note || "Ajuste manual de inventario",
+        companyId,
+        branchId,
       },
     });
 
     await tx.auditLog.create({
       data: {
         userId,
+        companyId,
         action: "ADJUST",
         entity: "INVENTORY",
         entityId: data.productId,

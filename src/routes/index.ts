@@ -18,7 +18,7 @@ import companyRoutes from "../modules/company/company.routes";
 import branchRoutes from "../modules/branches/branch.routes";
 import taxRoutes from "../modules/taxes/tax.routes";
 import billingRoutes from "../modules/billing/billing.routes";
-import { authenticate } from "../middlewares/auth.middleware";
+import { authenticate, requireCompany } from "../middlewares/auth.middleware";
 import { authorize } from "../middlewares/role.middleware";
 import { asyncHandler } from "../utils/asyncHandler";
 import { sendSuccess } from "../utils/response";
@@ -29,30 +29,31 @@ const router = Router();
 router.use("/auth", authRoutes);
 router.use("/setup", setupRoutes);
 
-router.use("/users", userRoutes);
-router.use("/roles", roleRoutes);
-router.use("/company", companyRoutes);
-router.use("/branches", branchRoutes);
-router.use("/taxes", taxRoutes);
-router.use("/billing", billingRoutes);
-router.use("/categories", categoryRoutes);
-router.use("/products", productRoutes);
-router.use("/providers", providerRoutes);
-router.use("/clients", clientRoutes);
-router.use("/purchases", purchaseRoutes);
-router.use("/sales", saleRoutes);
-router.use("/inventory", inventoryRoutes);
-router.use("/cash-register", cashRegisterRoutes);
-router.use("/returns", returnRoutes);
-router.use("/dashboard", dashboardRoutes);
-router.use("/analytics", analyticsRoutes);
+router.use("/users", authenticate, requireCompany, userRoutes);
+router.use("/roles", authenticate, requireCompany, roleRoutes);
+router.use("/company", authenticate, requireCompany, companyRoutes);
+router.use("/branches", authenticate, requireCompany, branchRoutes);
+router.use("/taxes", authenticate, requireCompany, taxRoutes);
+router.use("/billing", authenticate, requireCompany, billingRoutes);
+router.use("/categories", authenticate, requireCompany, categoryRoutes);
+router.use("/products", authenticate, requireCompany, productRoutes);
+router.use("/providers", authenticate, requireCompany, providerRoutes);
+router.use("/clients", authenticate, requireCompany, clientRoutes);
+router.use("/purchases", authenticate, requireCompany, purchaseRoutes);
+router.use("/sales", authenticate, requireCompany, saleRoutes);
+router.use("/inventory", authenticate, requireCompany, inventoryRoutes);
+router.use("/cash-register", authenticate, requireCompany, cashRegisterRoutes);
+router.use("/returns", authenticate, requireCompany, returnRoutes);
+router.use("/dashboard", authenticate, requireCompany, dashboardRoutes);
+router.use("/analytics", authenticate, requireCompany, analyticsRoutes);
 
 router.get(
   "/audit",
   authenticate,
+  requireCompany,
   authorize("users:manage"),
-  asyncHandler(async (_req, res) => {
-    const logs = await auditService.findAll();
+  asyncHandler(async (req: any, res) => {
+    const logs = await auditService.findAll(req.user?.companyId);
     sendSuccess(res, logs);
   })
 );

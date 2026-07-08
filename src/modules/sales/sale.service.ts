@@ -42,12 +42,11 @@ export const findById = async (id: number, companyId: number) => {
   return sale;
 };
 
-export const create = async (data: CreateSaleInput, userId: number, userRole: string) => {
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user?.companyId) throw new AppError("Debe configurar la empresa antes de usar este módulo", 400);
+export const create = async (data: CreateSaleInput, userId: number, userRole: string, userCompanyId: number, userBranchId: number | null) => {
+  if (!userCompanyId) throw new AppError("Debe configurar la empresa antes de usar este módulo", 400);
 
-  const companyId = user.companyId;
-  const branchId = data.branchId || user.branchId;
+  const companyId = userCompanyId;
+  const branchId = data.branchId || userBranchId;
   if (!branchId) throw new AppError("Debe estar asociado a una sucursal para realizar ventas", 400);
 
   const billingConfig = await prisma.billingConfig.findUnique({ where: { companyId } });
@@ -100,15 +99,19 @@ export const create = async (data: CreateSaleInput, userId: number, userRole: st
   }[] = [];
 
   for (const detail of data.details) {
-    const product = await prisma.product.findUnique({
-      where: { id: detail.productId },
+    const product = await prisma.product.findFirst({
+      where: { id: detail.productId, companyId },
       include: { tax: true },
     });
 
-    if (!product) throw new AppError(`Producto ID ${detail.productId} no encontrado`, 404);
+    if (!product) throw new AppError(`Producto ID ${detail.productId} no encontrado o no pertenece a esta empresa`, 404);
     if (!product.active) throw new AppError(`Producto ${product.name} está inactivo`, 400);
     if (product.stock < detail.quantity) {
       throw new AppError(`Stock insuficiente para ${product.name}. Disponible: ${product.stock}, solicitado: ${detail.quantity}`, 400);
+    }
+
+    if (product.companyId !== companyId) {
+      throw new AppError(`Producto ${product.name} no pertenece a esta empresa`, 400);
     }
 
     let taxRate = 0;
@@ -149,6 +152,11 @@ export const create = async (data: CreateSaleInput, userId: number, userRole: st
     totalDiscount
   );
 
+  if (data.clientId) {
+    const client = await prisma.client.findFirst({ where: { id: data.clientId, companyId } });
+    if (!client) throw new AppError("Cliente no pertenece a esta empresa", 400);
+  }
+
   const sale = await prisma.$transaction(async (tx) => {
     const lastSale = await tx.sale.findFirst({
       where: { companyId },
@@ -186,6 +194,8 @@ export const create = async (data: CreateSaleInput, userId: number, userRole: st
             taxRate: d.taxRate,
             taxAmount: d.taxAmount,
             totalLine: d.totalLine,
+            companyId,
+            branchId,
           })),
         },
       },
@@ -231,13 +241,16 @@ export const create = async (data: CreateSaleInput, userId: number, userRole: st
     }
 
     const openRegister = await tx.cashRegister.findFirst({
-      where: { userId, status: "ABIERTA" },
+      where: { userId, companyId, branchId, status: "ABIERTA" },
     });
 
     if (openRegister) {
       await tx.cashMovement.create({
         data: {
           cashRegisterId: openRegister.id,
+          companyId,
+          branchId,
+          userId,
           type: "SALE",
           amount: sale.total,
           description: `Venta #${saleNumber}`,
@@ -253,6 +266,7 @@ export const create = async (data: CreateSaleInput, userId: number, userRole: st
     await tx.auditLog.create({
       data: {
         userId,
+        companyId,
         action: "CREATE",
         entity: "SALE",
         entityId: sale.id,
@@ -312,7 +326,7 @@ export const cancel = async (id: number, userId: number) => {
           reference: "CANCELLED_SALE",
           referenceId: sale.id,
           note: "Anulación de venta - reversión de stock",
-          companyId: user.companyId,
+          companyId: user.companyId!,
           branchId: user.branchId,
         },
       });
@@ -321,6 +335,7 @@ export const cancel = async (id: number, userId: number) => {
     await tx.auditLog.create({
       data: {
         userId,
+        companyId: user.companyId,
         action: "CANCEL",
         entity: "SALE",
         entityId: sale.id,

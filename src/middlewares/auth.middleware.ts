@@ -52,13 +52,24 @@ export const authenticate = async (
   }
 };
 
-export const requireSetup = async (
+export const requireCompany = async (
   req: AuthRequest,
   _res: Response,
   next: NextFunction
 ) => {
   if (!req.user?.companyId) {
     return next(new AppError("Debe configurar la empresa antes de usar este módulo. Use GET /api/setup/status para verificar.", 400));
+  }
+  next();
+};
+
+export const requireBranch = async (
+  req: AuthRequest,
+  _res: Response,
+  next: NextFunction
+) => {
+  if (!req.user?.branchId) {
+    return next(new AppError("Debe estar asociado a una sucursal para usar este módulo.", 400));
   }
   next();
 };

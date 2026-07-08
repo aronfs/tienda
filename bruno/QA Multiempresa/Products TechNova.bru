@@ -1,0 +1,28 @@
+meta {
+  name: Products TechNova
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/products
+  headers: {
+    Authorization: Bearer {{technova_token}}
+  }
+}
+
+auth: none
+
+script:post-response {
+  const data = res.getBody().data;
+  const names = data.map(p => p.name);
+  console.log("TechNova Products:", names);
+  // Must NOT contain: Leche, Arroz, Coca-Cola, Agua, Papas, Detergente
+  const forbidden = ["Leche", "Arroz", "Coca-Cola", "Agua", "Papas", "Detergente"];
+  const found = forbidden.filter(f => names.some(n => n.includes(f)));
+  if (found.length > 0) {
+    console.error("FAIL: Found MiniMarket products in TechNova:", found);
+  } else {
+    console.log("PASS: No MiniMarket products found in TechNova");
+  }
+}

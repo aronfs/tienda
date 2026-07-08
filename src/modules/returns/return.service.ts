@@ -11,8 +11,9 @@ interface EnrichedReturnDetail {
   subtotal: number;
 }
 
-export const findAll = async () => {
+export const findAll = async (companyId: number) => {
   return prisma.return.findMany({
+    where: { companyId },
     include: {
       sale: { select: { id: true, number: true, series: true } },
       details: {
@@ -23,13 +24,13 @@ export const findAll = async () => {
   });
 };
 
-export const create = async (data: CreateReturnInput, userId: number) => {
-  const sale = await prisma.sale.findUnique({
-    where: { id: data.saleId },
+export const create = async (data: CreateReturnInput, userId: number, companyId: number, branchId: number | null) => {
+  const sale = await prisma.sale.findFirst({
+    where: { id: data.saleId, companyId },
     include: { details: true },
   });
 
-  if (!sale) throw new AppError("Venta no encontrada", 404);
+  if (!sale) throw new AppError("Venta no encontrada o no pertenece a esta empresa", 404);
   if (sale.status === "ANULADA") throw new AppError("No se puede devolver una venta anulada", 400);
 
   const enrichedDetails: EnrichedReturnDetail[] = [];
@@ -39,10 +40,10 @@ export const create = async (data: CreateReturnInput, userId: number) => {
       throw new AppError(`Producto ID ${detail.productId} no está en la venta`, 400);
     }
 
-    const product = await prisma.product.findUnique({
-      where: { id: detail.productId },
+    const product = await prisma.product.findFirst({
+      where: { id: detail.productId, companyId },
     });
-    if (!product) throw new AppError(`Producto ID ${detail.productId} no encontrado`, 404);
+    if (!product) throw new AppError(`Producto ID ${detail.productId} no encontrado o no pertenece a esta empresa`, 404);
 
     enrichedDetails.push({
       productId: detail.productId,
@@ -61,6 +62,8 @@ export const create = async (data: CreateReturnInput, userId: number) => {
       data: {
         saleId: data.saleId,
         userId,
+        companyId,
+        branchId,
         reason: data.reason,
         subtotal,
         tax: 0,
@@ -71,6 +74,8 @@ export const create = async (data: CreateReturnInput, userId: number) => {
             quantity: d.quantity,
             unitPrice: d.unitPrice,
             subtotal: d.subtotal,
+            companyId,
+            branchId,
           })),
         },
       },
@@ -100,6 +105,8 @@ export const create = async (data: CreateReturnInput, userId: number) => {
           stockAfter: product.stock + detail.quantity,
           reference: "RETURN",
           referenceId: returnRecord.id,
+          companyId,
+          branchId,
         },
       });
     }
@@ -107,6 +114,7 @@ export const create = async (data: CreateReturnInput, userId: number) => {
     await tx.auditLog.create({
       data: {
         userId,
+        companyId,
         action: "CREATE",
         entity: "RETURN",
         entityId: returnRecord.id,

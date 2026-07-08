@@ -65,6 +65,8 @@ export const loginUser = async (data: LoginInput) => {
     userId: user.id,
     roleId: user.roleId,
     roleName: user.role.name,
+    companyId: user.companyId,
+    branchId: user.branchId,
   });
 
   const company = user.companyId ? await prisma.company.findUnique({ where: { id: user.companyId }, select: { id: true, legalName: true, taxId: true, status: true } }) : null;

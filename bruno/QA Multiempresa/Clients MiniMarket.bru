@@ -1,0 +1,27 @@
+meta {
+  name: Clients MiniMarket
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{base_url}}/clients
+  headers: {
+    Authorization: Bearer {{minimarket_token}}
+  }
+}
+
+auth: none
+
+script:post-response {
+  const data = res.getBody().data || [];
+  const names = data.map(c => c.name);
+  console.log("MiniMarket Clients:", names);
+  const forbidden = ["Carlos Andrade", "Lucía Torres", "Empresa Soluciones Andinas"];
+  const found = forbidden.filter(f => names.some(n => n.includes(f)));
+  if (found.length > 0) {
+    console.error("FAIL: Found TechNova clients in MiniMarket:", found);
+  } else {
+    console.log("PASS: No TechNova clients found in MiniMarket");
+  }
+}

@@ -1,0 +1,35 @@
+meta {
+  name: Create Client MiniMarket
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{base_url}}/clients
+  body: json
+  headers: {
+    Authorization: Bearer {{minimarket_token}}
+    Content-Type: application/json
+  }
+}
+
+auth: none
+
+body:json {
+  {
+    "name": "Pedro Prueba",
+    "docType": "DNI",
+    "docNumber": "99999999",
+    "phone": "0999999999",
+    "email": "pedro.prueba@email.com"
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    console.log("PASS: Client created in MiniMarket");
+    bru.setVar("minimarket_client_id", res.getBody().data.id);
+  } else {
+    console.error("FAIL:", res.getBody());
+  }
+}

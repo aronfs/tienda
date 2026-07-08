@@ -1,0 +1,27 @@
+meta {
+  name: Clients TechNova
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{base_url}}/clients
+  headers: {
+    Authorization: Bearer {{technova_token}}
+  }
+}
+
+auth: none
+
+script:post-response {
+  const data = res.getBody().data || [];
+  const names = data.map(c => c.name);
+  console.log("TechNova Clients:", names);
+  const forbidden = ["Juan Pérez", "María González", "Tienda Vecina"];
+  const found = forbidden.filter(f => names.some(n => n.includes(f)));
+  if (found.length > 0) {
+    console.error("FAIL: Found MiniMarket clients in TechNova:", found);
+  } else {
+    console.log("PASS: No MiniMarket clients found in TechNova");
+  }
+}

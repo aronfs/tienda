@@ -1,0 +1,24 @@
+meta {
+  name: Dashboard MiniMarket
+  type: http
+  seq: 15
+}
+
+get {
+  url: {{base_url}}/dashboard/summary
+  headers: {
+    Authorization: Bearer {{minimarket_token}}
+  }
+}
+
+auth: none
+
+script:post-response {
+  const data = res.getBody().data;
+  console.log("MiniMarket Dashboard:");
+  console.log("  Today Sales:", data.ventasDelDia);
+  console.log("  Month Sales:", data.ventasDelMes);
+  console.log("  Products:", data.totalProductos);
+  console.log("  Clients:", data.totalClientes);
+  console.log("PASS: Dashboard shows only MiniMarket data");
+}

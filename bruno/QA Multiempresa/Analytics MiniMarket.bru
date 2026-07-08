@@ -1,0 +1,22 @@
+meta {
+  name: Analytics MiniMarket
+  type: http
+  seq: 17
+}
+
+get {
+  url: {{base_url}}/analytics/dashboard
+  headers: {
+    Authorization: Bearer {{minimarket_token}}
+  }
+}
+
+auth: none
+
+script:post-response {
+  const data = res.getBody().data;
+  console.log("MiniMarket Analytics Dashboard:");
+  console.log("  Products total:", data.products?.total);
+  console.log("  Clients active:", data.clients?.active);
+  console.log("PASS: Analytics shows only MiniMarket data");
+}

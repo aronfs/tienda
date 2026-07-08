@@ -1,0 +1,25 @@
+meta {
+  name: Verify Product Not In TechNova
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{base_url}}/products
+  headers: {
+    Authorization: Bearer {{technova_token}}
+  }
+}
+
+auth: none
+
+script:post-response {
+  const data = res.getBody().data || [];
+  const names = data.map(p => p.name);
+  const found = names.filter(n => n.includes("Jabón"));
+  if (found.length > 0) {
+    console.error("FAIL: MiniMarket product found in TechNova:", found);
+  } else {
+    console.log("PASS: MiniMarket product NOT found in TechNova");
+  }
+}

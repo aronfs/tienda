@@ -5,6 +5,8 @@ interface TokenPayload {
   userId: number;
   roleId: number;
   roleName: string;
+  companyId: number | null;
+  branchId: number | null;
 }
 
 export const generateToken = (payload: TokenPayload): string => {

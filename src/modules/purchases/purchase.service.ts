@@ -32,20 +32,19 @@ export const findById = async (id: number, companyId: number) => {
   return purchase;
 };
 
-export const create = async (data: CreatePurchaseInput, userId: number) => {
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user?.companyId) throw new AppError("Debe configurar la empresa antes de usar este módulo", 400);
+export const create = async (data: CreatePurchaseInput, userId: number, userCompanyId: number, userBranchId: number | null) => {
+  if (!userCompanyId) throw new AppError("Debe configurar la empresa antes de usar este módulo", 400);
 
-  const companyId = user.companyId;
-  const branchId = data.branchId || user.branchId;
+  const companyId = userCompanyId;
+  const branchId = data.branchId || userBranchId;
   if (!branchId) throw new AppError("Debe estar asociado a una sucursal", 400);
 
-  const provider = await prisma.provider.findUnique({ where: { id: data.providerId } });
-  if (!provider) throw new AppError("Proveedor no encontrado", 404);
+  const provider = await prisma.provider.findFirst({ where: { id: data.providerId, companyId } });
+  if (!provider) throw new AppError("Proveedor no encontrado o no pertenece a esta empresa", 404);
 
   for (const detail of data.details) {
-    const product = await prisma.product.findUnique({ where: { id: detail.productId } });
-    if (!product) throw new AppError(`Producto ID ${detail.productId} no encontrado`, 404);
+    const product = await prisma.product.findFirst({ where: { id: detail.productId, companyId } });
+    if (!product) throw new AppError(`Producto ID ${detail.productId} no encontrado o no pertenece a esta empresa`, 404);
     if (!product.active) throw new AppError(`Producto ${product.name} está inactivo`, 400);
   }
 
@@ -77,6 +76,8 @@ export const create = async (data: CreatePurchaseInput, userId: number) => {
             quantity: d.quantity,
             unitCost: d.unitCost,
             subtotal: d.subtotal,
+            companyId,
+            branchId,
           })),
         },
       },
@@ -115,6 +116,7 @@ export const create = async (data: CreatePurchaseInput, userId: number) => {
     await tx.auditLog.create({
       data: {
         userId,
+        companyId,
         action: "CREATE",
         entity: "PURCHASE",
         entityId: purchase.id,
