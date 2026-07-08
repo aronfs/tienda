@@ -1,0 +1,25 @@
+meta {
+  name: Sales Analytics
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/api/analytics/sales
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+params:query {
+  period: this_month
+}
+
+script:post-response {
+  if (res.status === 200) {
+    console.log("Sales analytics consultadas correctamente");
+  }
+}

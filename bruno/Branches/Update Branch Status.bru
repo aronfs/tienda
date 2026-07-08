@@ -1,0 +1,25 @@
+meta {
+  name: Update Branch Status
+  type: http
+  seq: 10
+}
+
+patch {
+  url: {{base_url}}/api/branches/1/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "status": "MAINTENANCE"
+  }
+}

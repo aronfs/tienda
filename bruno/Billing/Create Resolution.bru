@@ -1,0 +1,31 @@
+meta {
+  name: Create Resolution
+  type: http
+  seq: 23
+}
+
+post {
+  url: {{base_url}}/api/billing/resolutions
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "prefix": "FAC",
+    "startNumber": 10001,
+    "endNumber": 20000,
+    "currentNumber": 10001,
+    "authorizationCode": "NEW-RES-002",
+    "validFrom": "2026-06-01",
+    "validUntil": "2026-12-31"
+  }
+}

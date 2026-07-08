@@ -1,0 +1,19 @@
+meta {
+  name: Cash
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{base_url}}/api/analytics/cash
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+params:query {
+  period: this_month
+}

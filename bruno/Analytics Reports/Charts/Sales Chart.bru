@@ -1,0 +1,19 @@
+meta {
+  name: Sales Chart
+  type: http
+  seq: 19
+}
+
+get {
+  url: {{base_url}}/api/analytics/charts/sales
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+params:query {
+  period: this_month
+}

@@ -1,0 +1,25 @@
+meta {
+  name: Update Logo
+  type: http
+  seq: 5
+}
+
+patch {
+  url: {{base_url}}/api/company/logo
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "logoUrl": "https://storage.example.com/logos/omnistore.png"
+  }
+}

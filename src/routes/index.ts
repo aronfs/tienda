@@ -12,7 +12,12 @@ import inventoryRoutes from "../modules/inventory/inventory.routes";
 import cashRegisterRoutes from "../modules/cash-register/cashRegister.routes";
 import returnRoutes from "../modules/returns/return.routes";
 import dashboardRoutes from "../modules/dashboard/dashboard.routes";
-import prisma from "../config/prisma";
+import analyticsRoutes from "../modules/analytics/analytics.routes";
+import setupRoutes from "../modules/setup/setup.routes";
+import companyRoutes from "../modules/company/company.routes";
+import branchRoutes from "../modules/branches/branch.routes";
+import taxRoutes from "../modules/taxes/tax.routes";
+import billingRoutes from "../modules/billing/billing.routes";
 import { authenticate } from "../middlewares/auth.middleware";
 import { authorize } from "../middlewares/role.middleware";
 import { asyncHandler } from "../utils/asyncHandler";
@@ -22,8 +27,14 @@ import * as auditService from "../modules/audit/audit.service";
 const router = Router();
 
 router.use("/auth", authRoutes);
+router.use("/setup", setupRoutes);
+
 router.use("/users", userRoutes);
 router.use("/roles", roleRoutes);
+router.use("/company", companyRoutes);
+router.use("/branches", branchRoutes);
+router.use("/taxes", taxRoutes);
+router.use("/billing", billingRoutes);
 router.use("/categories", categoryRoutes);
 router.use("/products", productRoutes);
 router.use("/providers", providerRoutes);
@@ -34,6 +45,7 @@ router.use("/inventory", inventoryRoutes);
 router.use("/cash-register", cashRegisterRoutes);
 router.use("/returns", returnRoutes);
 router.use("/dashboard", dashboardRoutes);
+router.use("/analytics", analyticsRoutes);
 
 router.get(
   "/audit",
@@ -42,30 +54,6 @@ router.get(
   asyncHandler(async (_req, res) => {
     const logs = await auditService.findAll();
     sendSuccess(res, logs);
-  })
-);
-
-router.get(
-  "/config",
-  authenticate,
-  authorize("settings:manage"),
-  asyncHandler(async (_req, res) => {
-    const config = await prisma.storeConfig.findFirst();
-    sendSuccess(res, config);
-  })
-);
-
-router.put(
-  "/config",
-  authenticate,
-  authorize("settings:manage"),
-  asyncHandler(async (req, res) => {
-    const config = await prisma.storeConfig.upsert({
-      where: { id: 1 },
-      update: req.body,
-      create: { id: 1, ...req.body },
-    });
-    sendSuccess(res, config, "Configuración actualizada correctamente");
   })
 );
 

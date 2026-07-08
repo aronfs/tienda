@@ -1,0 +1,25 @@
+meta {
+  name: Update Tax Status
+  type: http
+  seq: 17
+}
+
+patch {
+  url: {{base_url}}/api/taxes/1/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "isActive": false
+  }
+}

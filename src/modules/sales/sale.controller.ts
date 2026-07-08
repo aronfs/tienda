@@ -4,13 +4,13 @@ import { sendSuccess } from "../../utils/response";
 import { AuthRequest } from "../../middlewares/auth.middleware";
 import * as saleService from "./sale.service";
 
-export const findAll = asyncHandler(async (_req: Request, res: Response) => {
-  const sales = await saleService.findAll();
+export const findAll = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const sales = await saleService.findAll(req.user!.companyId!);
   sendSuccess(res, sales);
 });
 
-export const findById = asyncHandler(async (req: Request, res: Response) => {
-  const sale = await saleService.findById(Number(req.params.id));
+export const findById = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const sale = await saleService.findById(Number(req.params.id), req.user!.companyId!);
   sendSuccess(res, sale);
 });
 

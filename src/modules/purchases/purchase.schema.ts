@@ -11,6 +11,7 @@ export const createPurchaseSchema = z.object({
   series: z.string().optional(),
   number: z.number().int().optional(),
   details: z.array(purchaseDetailSchema).min(1, "Debe tener al menos un detalle"),
+  branchId: z.number().int().positive().optional(),
 });
 
 export type CreatePurchaseInput = z.infer<typeof createPurchaseSchema>;

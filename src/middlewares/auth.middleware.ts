@@ -8,6 +8,8 @@ export interface AuthRequest extends Request {
     userId: number;
     roleId: number;
     roleName: string;
+    companyId: number | null;
+    branchId: number | null;
   };
 }
 
@@ -40,10 +42,23 @@ export const authenticate = async (
       userId: user.id,
       roleId: user.roleId,
       roleName: user.role.name,
+      companyId: user.companyId,
+      branchId: user.branchId,
     };
 
     next();
   } catch (error) {
     return next(new AppError("Token inválido o expirado", 401));
   }
+};
+
+export const requireSetup = async (
+  req: AuthRequest,
+  _res: Response,
+  next: NextFunction
+) => {
+  if (!req.user?.companyId) {
+    return next(new AppError("Debe configurar la empresa antes de usar este módulo. Use GET /api/setup/status para verificar.", 400));
+  }
+  next();
 };

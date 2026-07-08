@@ -1,0 +1,19 @@
+meta {
+  name: Products
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{base_url}}/api/analytics/products
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+params:query {
+  period: this_month
+}

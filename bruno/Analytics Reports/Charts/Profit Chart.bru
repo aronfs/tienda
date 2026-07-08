@@ -1,0 +1,19 @@
+meta {
+  name: Profit Chart
+  type: http
+  seq: 18
+}
+
+get {
+  url: {{base_url}}/api/analytics/charts/profit
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+params:query {
+  period: this_month
+}

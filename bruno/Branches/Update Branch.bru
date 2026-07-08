@@ -1,0 +1,26 @@
+meta {
+  name: Update Branch
+  type: http
+  seq: 9
+}
+
+put {
+  url: {{base_url}}/api/branches/1
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Sede Principal - Quito (Actualizado)",
+    "managerName": "Nuevo Gerente"
+  }
+}

@@ -10,6 +10,7 @@
     "prisma:generate": "bunx prisma generate",
     "prisma:migrate": "bunx prisma migrate dev",
     "prisma:seed": "bun prisma/seed.ts",
+    "prisma:seed:demo": "bun prisma/seed.demo.ts",
     "prisma:studio": "bunx prisma studio"
   },
   "dependencies": {

@@ -1,0 +1,25 @@
+meta {
+  name: Dashboard
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/api/analytics/dashboard
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+params:query {
+  period: this_month
+}
+
+script:post-response {
+  if (res.status === 200) {
+    console.log("Dashboard consultado correctamente");
+  }
+}

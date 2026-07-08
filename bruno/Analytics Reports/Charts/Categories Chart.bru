@@ -1,0 +1,20 @@
+meta {
+  name: Categories Chart
+  type: http
+  seq: 20
+}
+
+get {
+  url: {{base_url}}/api/analytics/charts/categories
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+params:query {
+  period: this_month
+  limit: 10
+}

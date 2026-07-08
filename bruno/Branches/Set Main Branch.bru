@@ -1,0 +1,15 @@
+meta {
+  name: Set Main Branch
+  type: http
+  seq: 11
+}
+
+patch {
+  url: {{base_url}}/api/branches/1/set-main
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}

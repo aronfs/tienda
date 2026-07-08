@@ -1,0 +1,15 @@
+meta {
+  name: Delete Branch
+  type: http
+  seq: 12
+}
+
+delete {
+  url: {{base_url}}/api/branches/2
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}

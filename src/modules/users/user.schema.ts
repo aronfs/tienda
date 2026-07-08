@@ -5,6 +5,8 @@ export const createUserSchema = z.object({
   email: z.string().email("Correo inválido"),
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
   roleId: z.number().int().positive("El rol es requerido"),
+  companyId: z.number().int().positive().optional(),
+  branchId: z.number().int().positive().optional(),
 });
 
 export const updateUserSchema = z.object({
@@ -12,6 +14,8 @@ export const updateUserSchema = z.object({
   email: z.string().email().optional(),
   password: z.string().min(6).optional(),
   roleId: z.number().int().positive().optional(),
+  companyId: z.number().int().positive().optional(),
+  branchId: z.number().int().positive().optional(),
 });
 
 export type CreateUserInput = z.infer<typeof createUserSchema>;

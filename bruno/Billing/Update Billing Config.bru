@@ -1,0 +1,27 @@
+meta {
+  name: Update Billing Config
+  type: http
+  seq: 21
+}
+
+put {
+  url: {{base_url}}/api/billing/config
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "includeTaxInPrice": false,
+    "allowInvoiceWithoutResolution": false,
+    "invoiceFooterText": "Gracias por su preferencia - OmniStore Pro"
+  }
+}

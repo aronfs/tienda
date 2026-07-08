@@ -13,6 +13,7 @@ export const createSaleSchema = z.object({
   details: z.array(saleDetailSchema).min(1, "Debe tener al menos un detalle"),
   discount: z.number().min(0).default(0),
   paymentMethod: paymentMethodEnum.default("EFECTIVO"),
+  branchId: z.number().int().positive().optional(),
 });
 
 export type CreateSaleInput = z.infer<typeof createSaleSchema>;

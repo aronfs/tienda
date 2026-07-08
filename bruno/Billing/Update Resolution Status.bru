@@ -1,0 +1,25 @@
+meta {
+  name: Update Resolution Status
+  type: http
+  seq: 25
+}
+
+patch {
+  url: {{base_url}}/api/billing/resolutions/1/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "status": "EXPIRED"
+  }
+}

@@ -1,0 +1,15 @@
+meta {
+  name: Get Default Tax
+  type: http
+  seq: 14
+}
+
+get {
+  url: {{base_url}}/api/taxes/default
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}

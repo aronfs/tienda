@@ -1,0 +1,15 @@
+meta {
+  name: Delete Tax
+  type: http
+  seq: 19
+}
+
+delete {
+  url: {{base_url}}/api/taxes/3
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}

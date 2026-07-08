@@ -1,0 +1,19 @@
+meta {
+  name: Categories
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{base_url}}/api/analytics/categories
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+params:query {
+  period: this_month
+}

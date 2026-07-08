@@ -1,0 +1,19 @@
+meta {
+  name: Payments Chart
+  type: http
+  seq: 22
+}
+
+get {
+  url: {{base_url}}/api/analytics/charts/payments
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+params:query {
+  period: this_month
+}

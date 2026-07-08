@@ -1,0 +1,19 @@
+meta {
+  name: Revenue Chart
+  type: http
+  seq: 17
+}
+
+get {
+  url: {{base_url}}/api/analytics/charts/revenue
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+params:query {
+  period: this_month
+}

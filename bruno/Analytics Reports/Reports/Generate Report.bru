@@ -1,0 +1,31 @@
+meta {
+  name: Generate Report
+  type: http
+  seq: 13
+}
+
+post {
+  url: {{base_url}}/api/analytics/reports/generate
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "type": "ventas",
+    "startDate": "2026-01-01",
+    "endDate": "2026-12-31",
+    "format": "PDF",
+    "filters": {
+      "paymentMethod": "EFECTIVO"
+    }
+  }
+}

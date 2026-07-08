@@ -1,0 +1,28 @@
+meta {
+  name: Update My Company
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{base_url}}/api/company/me
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "legalName": "OmniStore Retail Solutions S.A.",
+    "commercialName": "OmniStore Pro",
+    "phone": "0999999999",
+    "mainAddress": "Av. Principal 123, Quito"
+  }
+}

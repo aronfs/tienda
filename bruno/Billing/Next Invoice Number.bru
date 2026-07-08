@@ -1,0 +1,15 @@
+meta {
+  name: Next Invoice Number
+  type: http
+  seq: 27
+}
+
+get {
+  url: {{base_url}}/api/billing/next-invoice-number
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}

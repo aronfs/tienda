@@ -36,6 +36,25 @@ enum PurchaseStatus {
   ANULADA
 }
 
+enum BranchStatus {
+  OPERATIVE
+  MAINTENANCE
+  INACTIVE
+}
+
+enum InvoiceResolutionStatus {
+  ACTIVE
+  EXPIRED
+  INACTIVE
+  EXHAUSTED
+}
+
+enum TaxAppliesTo {
+  SALE
+  PURCHASE
+  BOTH
+}
+
 model Role {
   id              Int               @id @default(autoincrement())
   name            String            @unique
@@ -64,16 +83,145 @@ model RolePermission {
   @@id([roleId, permissionId])
 }
 
+model Company {
+  id              Int      @id @default(autoincrement())
+  legalName       String
+  commercialName  String
+  taxId           String   @unique
+  email           String
+  phone           String?
+  website         String?
+  logoUrl         String?
+  mainAddress     String?
+  status          String   @default("ACTIVE")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  branches        Branch[]
+  regionalConfig  RegionalConfig?
+  taxes           Tax[]
+  invoiceResolutions InvoiceResolution[]
+  billingConfig   BillingConfig?
+  users           User[]
+  products        Product[]
+  sales           Sale[]
+  purchases       Purchase[]
+  inventoryMovements InventoryMovement[]
+  cashRegisters   CashRegister[]
+
+  @@map("companies")
+}
+
+model Branch {
+  id        Int          @id @default(autoincrement())
+  companyId Int
+  company   Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  code      String
+  name      String
+  address   String?
+  city      String?
+  country   String?
+  phone     String?
+  email     String?
+  managerName String?
+  status    BranchStatus @default(OPERATIVE)
+  isMain    Boolean      @default(false)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  users     User[]
+  sales     Sale[]
+  purchases Purchase[]
+  cashRegisters CashRegister[]
+  inventoryMovements InventoryMovement[]
+  invoiceResolutions InvoiceResolution[]
+
+  @@unique([companyId, code])
+  @@map("branches")
+}
+
+model RegionalConfig {
+  id               Int      @id @default(autoincrement())
+  companyId        Int      @unique
+  company          Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  baseCurrency     String   @default("USD")
+  timezone         String   @default("America/Guayaquil")
+  dateFormat       String   @default("DD/MM/YYYY")
+  decimalSeparator String @default(".")
+  thousandSeparator String  @default(",")
+  language         String   @default("es")
+  country          String   @default("Ecuador")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("regional_configs")
+}
+
+model Tax {
+  id          Int           @id @default(autoincrement())
+  companyId   Int
+  company     Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  rate        Float
+  isDefault   Boolean       @default(false)
+  isActive    Boolean       @default(true)
+  appliesTo   TaxAppliesTo  @default(BOTH)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  products    Product[]
+
+  @@map("taxes")
+}
+
+model InvoiceResolution {
+  id                Int                    @id @default(autoincrement())
+  companyId         Int
+  company           Company                @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branchId          Int?
+  branch            Branch?                @relation(fields: [branchId], references: [id])
+  prefix            String
+  startNumber       Int
+  endNumber         Int
+  currentNumber     Int
+  authorizationCode String?
+  validFrom         DateTime
+  validUntil        DateTime
+  status            InvoiceResolutionStatus @default(ACTIVE)
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+  sales             Sale[]
+
+  @@map("invoice_resolutions")
+}
+
+model BillingConfig {
+  id                        Int      @id @default(autoincrement())
+  companyId                 Int      @unique
+  company                   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  invoicePrefixDefault      String   @default("FAC")
+  invoiceFooterText           String?
+  includeTaxInPrice         Boolean  @default(false)
+  autoGenerateInvoiceNumber Boolean  @default(true)
+  allowInvoiceWithoutResolution Boolean @default(false)
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  @@map("billing_configs")
+}
+
 model User {
   id              Int                @id @default(autoincrement())
   name            String
-  email           String             @unique
+  email           String           @unique
   password        String
-  active          Boolean            @default(true)
+  active          Boolean          @default(true)
   roleId          Int
-  role            Role               @relation(fields: [roleId], references: [id])
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+  role            Role             @relation(fields: [roleId], references: [id])
+  companyId       Int?
+  branchId        Int?
+  company         Company?         @relation(fields: [companyId], references: [id])
+  branch          Branch?          @relation(fields: [branchId], references: [id])
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
   sales           Sale[]
   inventoryMovements InventoryMovement[]
   cashRegisters   CashRegister[]
@@ -116,6 +264,10 @@ model Product {
   category      Category             @relation(fields: [categoryId], references: [id])
   providerId    Int
   provider      Provider             @relation(fields: [providerId], references: [id])
+  companyId     Int?
+  taxId         Int?
+  company       Company?             @relation(fields: [companyId], references: [id])
+  tax           Tax?                 @relation(fields: [taxId], references: [id])
   purchasePrice Float
   salePrice     Float
   stock         Int                  @default(0)
@@ -150,6 +302,11 @@ model Purchase {
   providerId   Int
   provider     Provider         @relation(fields: [providerId], references: [id])
   userId       Int?
+  companyId    Int?
+  branchId     Int?
+  taxTotal     Float            @default(0)
+  company      Company?         @relation(fields: [companyId], references: [id])
+  branch       Branch?          @relation(fields: [branchId], references: [id])
   subtotal     Float
   tax          Float            @default(0)
   total        Float
@@ -178,6 +335,15 @@ model Sale {
   client        Client        @relation(fields: [clientId], references: [id])
   userId        Int
   user          User          @relation(fields: [userId], references: [id])
+  companyId     Int?
+  branchId      Int?
+  taxTotal      Float         @default(0)
+  invoiceNumber String?
+  invoicePrefix  String?
+  invoiceResolutionId Int?
+  company       Company?            @relation(fields: [companyId], references: [id])
+  branch        Branch?             @relation(fields: [branchId], references: [id])
+  invoiceResolution InvoiceResolution? @relation(fields: [invoiceResolutionId], references: [id])
   subtotal      Float
   discount      Float         @default(0)
   discountUser  Int?
@@ -192,15 +358,19 @@ model Sale {
 }
 
 model SaleDetail {
-  id      Int     @id @default(autoincrement())
-  saleId  Int
-  sale    Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  id        Int     @id @default(autoincrement())
+  saleId    Int
+  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
   productId Int
-  product Product @relation(fields: [productId], references: [id])
-  quantity Int
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
   unitPrice Float
-  discount  Float  @default(0)
+  discount  Float   @default(0)
+  taxId     Int?
+  taxRate   Float   @default(0)
+  taxAmount Float   @default(0)
   subtotal  Float
+  totalLine Float
 }
 
 model InventoryMovement {
@@ -209,6 +379,10 @@ model InventoryMovement {
   product   Product      @relation(fields: [productId], references: [id])
   userId    Int?
   user      User?        @relation(fields: [userId], references: [id])
+  companyId Int?
+  branchId  Int?
+  company   Company?     @relation(fields: [companyId], references: [id])
+  branch    Branch?      @relation(fields: [branchId], references: [id])
   type      MovementType
   quantity  Int
   stockBefore Int
@@ -223,12 +397,16 @@ model CashRegister {
   id            Int                @id @default(autoincrement())
   userId        Int
   user          User               @relation(fields: [userId], references: [id])
+  companyId     Int?
+  branchId        Int?
+  company       Company?           @relation(fields: [companyId], references: [id])
+  branch        Branch?            @relation(fields: [branchId], references: [id])
   openingDate   DateTime           @default(now())
   closingDate   DateTime?
   initialAmount Float
   totalSales    Float              @default(0)
   totalExpenses Float              @default(0)
-  expectedTotal Float?
+  expectedTotal  Float?
   actualTotal   Float?
   difference    Float?
   observations  String?
@@ -281,15 +459,4 @@ model AuditLog {
   entityId  Int?
   detail    String?
   createdAt DateTime @default(now())
-}
-
-model StoreConfig {
-  id               Int    @id @default(autoincrement())
-  storeName        String @default("Mi Tienda")
-  ruc              String @default("")
-  address          String @default("")
-  phone            String @default("")
-  email            String @default("")
-  currency         String @default("USD")
-  taxPercentage    Float  @default(15)
 }

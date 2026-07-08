@@ -1,0 +1,29 @@
+meta {
+  name: Create Tax
+  type: http
+  seq: 15
+}
+
+post {
+  url: {{base_url}}/api/taxes
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "ICE",
+    "description": "Impuesto al consumo especial",
+    "rate": 10,
+    "isDefault": false,
+    "appliesTo": "SALE"
+  }
+}

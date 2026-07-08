@@ -1,0 +1,15 @@
+meta {
+  name: Delete Resolution
+  type: http
+  seq: 26
+}
+
+delete {
+  url: {{base_url}}/api/billing/resolutions/2
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}

@@ -1,0 +1,73 @@
+meta {
+  name: Initialize System
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/api/setup/initialize
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "company": {
+      "legalName": "OmniStore Retail Solutions S.A.",
+      "commercialName": "OmniStore Pro",
+      "taxId": "900.452.123-0",
+      "email": "administracion@omnistore.com",
+      "phone": "0999999999",
+      "website": "https://www.omnistorepro.com",
+      "mainAddress": "Calle 100 #15-32, Edificio Platinum, Oficina 402"
+    },
+    "regionalConfig": {
+      "baseCurrency": "USD",
+      "timezone": "America/Guayaquil",
+      "dateFormat": "DD/MM/YYYY",
+      "decimalSeparator": ".",
+      "thousandSeparator": ",",
+      "language": "es",
+      "country": "Ecuador"
+    },
+    "mainBranch": {
+      "code": "SKL-UIO-01",
+      "name": "Sede Principal - Quito",
+      "address": "Av. Amazonas y Naciones Unidas",
+      "city": "Quito",
+      "country": "Ecuador",
+      "managerName": "Administrador Principal",
+      "phone": "0999999999",
+      "email": "sucursal@omnistore.com"
+    },
+    "taxes": [
+      { "name": "IVA General", "description": "IVA general 15%", "rate": 15, "isDefault": true, "appliesTo": "BOTH" },
+      { "name": "IVA Reducido", "description": "IVA reducido 5%", "rate": 5, "isDefault": false, "appliesTo": "BOTH" },
+      { "name": "Exento", "description": "Exento 0%", "rate": 0, "isDefault": false, "appliesTo": "BOTH" }
+    ],
+    "billingConfig": {
+      "invoicePrefixDefault": "FAC",
+      "invoiceFooterText": "Gracias por su compra",
+      "includeTaxInPrice": false,
+      "autoGenerateInvoiceNumber": true,
+      "allowInvoiceWithoutResolution": true
+    },
+    "invoiceResolution": {
+      "prefix": "FAC",
+      "startNumber": 1,
+      "endNumber": 10000,
+      "currentNumber": 1,
+      "authorizationCode": "INIT-RESOLUTION-001",
+      "validFrom": "2026-01-01",
+      "validUntil": "2026-12-31"
+    }
+  }
+}

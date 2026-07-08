@@ -11,6 +11,7 @@ export const createProductSchema = z.object({
   salePrice: z.number().min(0, "El precio de venta no puede ser negativo"),
   stock: z.number().int().min(0, "El stock no puede ser negativo").default(0),
   minStock: z.number().int().min(0).default(0),
+  taxId: z.number().int().positive().optional(),
 });
 
 export const updateProductSchema = z.object({
@@ -24,6 +25,7 @@ export const updateProductSchema = z.object({
   salePrice: z.number().min(0).optional(),
   stock: z.number().int().min(0).optional(),
   minStock: z.number().int().min(0).optional(),
+  taxId: z.number().int().positive().optional(),
 });
 
 export type CreateProductInput = z.infer<typeof createProductSchema>;

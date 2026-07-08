@@ -1,0 +1,15 @@
+meta {
+  name: Get Branch
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{base_url}}/api/branches/1
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}

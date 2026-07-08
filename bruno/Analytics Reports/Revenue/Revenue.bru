@@ -1,0 +1,19 @@
+meta {
+  name: Revenue
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url}}/api/analytics/revenue
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+params:query {
+  period: this_month
+}

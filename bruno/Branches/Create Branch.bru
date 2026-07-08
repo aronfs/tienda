@@ -1,0 +1,33 @@
+meta {
+  name: Create Branch
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{base_url}}/api/branches
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "code": "SKL-GYE-01",
+    "name": "Sucursal Guayaquil",
+    "address": "Av. 9 de Octubre 456",
+    "city": "Guayaquil",
+    "country": "Ecuador",
+    "phone": "0988888888",
+    "email": "guayaquil@omnistore.com",
+    "managerName": "Gerente Sucursal",
+    "isMain": false
+  }
+}

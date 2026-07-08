@@ -1,0 +1,19 @@
+meta {
+  name: Customers Chart
+  type: http
+  seq: 24
+}
+
+get {
+  url: {{base_url}}/api/analytics/charts/customers
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+params:query {
+  period: this_month
+}

@@ -1,0 +1,20 @@
+meta {
+  name: Products Chart
+  type: http
+  seq: 21
+}
+
+get {
+  url: {{base_url}}/api/analytics/charts/products
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+params:query {
+  period: this_month
+  limit: 10
+}
