@@ -8,7 +8,11 @@ import { errorHandler } from "./middlewares/error.middleware";
 const app = express();
 
 app.use(helmet());
-app.use(cors());
+const corsOptions = {
+  origin: env.corsOrigin,
+  credentials: true,
+};
+app.use(cors(corsOptions));
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
