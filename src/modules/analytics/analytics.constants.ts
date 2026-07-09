@@ -38,11 +38,11 @@ export const REPORT_TYPES = [
 export const REPORT_FORMATS = ["PDF", "Excel", "CSV"] as const;
 
 export const PERMISSIONS = {
-  ANALYTICS_READ: "analytics.read",
-  REPORTS_READ: "reports.read",
-  REPORTS_GENERATE: "reports.generate",
-  REPORTS_DOWNLOAD: "reports.download",
-  REPORTS_DELETE: "reports.delete",
+  ANALYTICS_READ: "analytics:read",
+  REPORTS_READ: "reports:read",
+  REPORTS_GENERATE: "reports:generate",
+  REPORTS_DOWNLOAD: "reports:download",
+  REPORTS_DELETE: "reports:delete",
 } as const;
 
 export const CHART_COLORS = [

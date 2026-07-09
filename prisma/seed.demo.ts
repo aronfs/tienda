@@ -49,12 +49,14 @@ async function main() {
     "purchases:create", "purchases:read",
     "inventory:adjust",
     "cash:open", "cash:close",
-    "reports:read", "users:manage", "settings:manage",
+    "reports:read", "reports:generate", "reports:download", "reports:delete",
+    "users:manage", "settings:manage",
     "company:read", "company:update",
     "branches:create", "branches:read", "branches:update", "branches:delete",
     "taxes:create", "taxes:read", "taxes:update", "taxes:delete",
     "billing:read", "billing:update",
     "setup:initialize", "setup:read",
+    "analytics:read",
   ];
   await prisma.permission.createMany({
     data: permNames.map((name) => ({ name })),
@@ -79,7 +81,7 @@ async function main() {
     { roleId: roleMap.ADMINISTRADOR, names: permNames },
     { roleId: roleMap.CAJERO, names: ["products:read", "sales:create", "sales:read", "cash:open", "cash:close"] },
     { roleId: roleMap.BODEGUERO, names: ["products:create", "products:read", "products:update", "purchases:create", "purchases:read", "inventory:adjust"] },
-    { roleId: roleMap.SUPERVISOR, names: ["products:read", "products:update", "sales:read", "reports:read", "branches:read", "company:read"] },
+    { roleId: roleMap.SUPERVISOR, names: ["products:read", "products:update", "sales:read", "purchases:read", "reports:read", "reports:generate", "reports:download", "branches:read", "company:read", "analytics:read", "cash:open", "cash:close"] },
   ];
   for (const rp of rolePerms) {
     await prisma.rolePermission.createMany({
@@ -195,7 +197,10 @@ async function main() {
   const warehouseUser = await prisma.user.create({
     data: { name: "Bodeguero Principal", email: "bodega@tienda.com", password: await bcrypt.hash("Bodega123!", salt), roleId: roleMap.BODEGUERO, companyId: company.id, branchId: mainBranch.id },
   });
-  const userMap = { "admin@tienda.com": adminUser.id, "cajero@tienda.com": cashierUser.id, "bodega@tienda.com": warehouseUser.id };
+  const supervisorUser = await prisma.user.create({
+    data: { name: "Supervisor Principal", email: "supervisor@tienda.com", password: await bcrypt.hash("Super123!", salt), roleId: roleMap.SUPERVISOR, companyId: company.id, branchId: mainBranch.id },
+  });
+  const userMap = { "admin@tienda.com": adminUser.id, "cajero@tienda.com": cashierUser.id, "bodega@tienda.com": warehouseUser.id, "supervisor@tienda.com": supervisorUser.id };
 
   // ─── 12. CATEGORÍAS ──────────────────────────────
   await prisma.category.createMany({
